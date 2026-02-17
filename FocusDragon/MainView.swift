@@ -16,6 +16,7 @@ struct MainView: View {
     @State private var domainValidationError: String?
 
     var body: some View {
+        let _ = print("📱 View updated - blockedItems count: \(manager.blockedItems.count), isBlocking: \(manager.isBlocking)")
         VStack(spacing: 20) {
             Text("FocusDragon")
                 .font(.largeTitle)
@@ -26,7 +27,7 @@ struct MainView: View {
                 HStack {
                     TextField("Enter domain (e.g., youtube.com)", text: $newDomain)
                         .textFieldStyle(.roundedBorder)
-                        .onChange(of: newDomain) { _ in
+                        .onChange(of: newDomain) {
                             domainValidationError = nil
                         }
                         .onSubmit {
@@ -74,12 +75,15 @@ struct MainView: View {
 
             // Control buttons
             HStack(spacing: 20) {
+                let isDisabled = isProcessing || manager.blockedItems.isEmpty
+                let _ = print("🔘 Button state - disabled: \(isDisabled), isProcessing: \(isProcessing), isEmpty: \(manager.blockedItems.isEmpty)")
+
                 Button(manager.isBlocking ? "Stop Block" : "Start Block") {
                     toggleBlocking()
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(manager.isBlocking ? .red : .green)
-                .disabled(isProcessing || manager.blockedItems.isEmpty)
+                .disabled(isDisabled)
 
                 if isProcessing {
                     ProgressView()
@@ -101,23 +105,32 @@ struct MainView: View {
     }
 
     private func addDomain() {
+        print("➕ addDomain called with: '\(newDomain)'")
         let cleaned = newDomain.cleanDomain
+        print("➕ Cleaned domain: '\(cleaned)'")
 
-        guard !cleaned.isEmpty else { return }
+        guard !cleaned.isEmpty else {
+            print("➕ Domain is empty after cleaning")
+            return
+        }
 
         guard cleaned.isValidDomain else {
+            print("➕ Domain validation failed")
             domainValidationError = "Invalid domain format. Use: example.com"
             return
         }
 
         if manager.blockedItems.contains(where: { $0.domain == cleaned }) {
+            print("➕ Domain already exists in list")
             domainValidationError = "Domain already in block list"
             return
         }
 
+        print("➕ Adding domain to manager")
         manager.addDomain(cleaned)
         newDomain = ""
         domainValidationError = nil
+        print("➕ Domain added successfully. Total domains: \(manager.blockedItems.count)")
     }
 
     private func binding(for item: BlockItem) -> Binding<Bool> {
@@ -128,16 +141,20 @@ struct MainView: View {
     }
 
     private func toggleBlocking() {
+        print("🚀 Toggle blocking clicked")
         isProcessing = true
 
         Task {
             do {
                 if manager.isBlocking {
+                    print("🚀 Stopping blocking...")
                     try await stopBlocking()
                 } else {
+                    print("🚀 Starting blocking...")
                     try await startBlocking()
                 }
             } catch {
+                print("🚀 Error occurred: \(error)")
                 await MainActor.run {
                     showError(error)
                 }
@@ -150,22 +167,23 @@ struct MainView: View {
     }
 
     private func startBlocking() async throws {
+        print("🚀 In startBlocking()")
         let enabledDomains = manager.blockedItems
             .filter { $0.isEnabled }
             .map { $0.domain }
 
+        print("🚀 Enabled domains: \(enabledDomains)")
+
         guard !enabledDomains.isEmpty else {
+            print("🚀 No enabled domains!")
             throw BlockError.noDomains
         }
 
-        // Request admin privileges
-        let hasPrivileges = await requestPrivileges()
-        guard hasPrivileges else {
-            throw BlockError.privilegesDenied
+        // Apply block (osascript will prompt for password)
+        print("🚀 Applying block...")
+        try await MainActor.run {
+            try HostsFileManager.shared.applyBlock(domains: enabledDomains)
         }
-
-        // Apply block
-        try HostsFileManager.shared.applyBlock(domains: enabledDomains)
 
         await MainActor.run {
             manager.isBlocking = true
@@ -173,18 +191,13 @@ struct MainView: View {
     }
 
     private func stopBlocking() async throws {
-        try HostsFileManager.shared.removeBlock()
+        try await MainActor.run {
+            try HostsFileManager.shared.removeBlock()
+        }
 
         await MainActor.run {
             manager.isBlocking = false
         }
-    }
-
-    private func requestPrivileges() async -> Bool {
-        // Run privilege request on background thread
-        return await Task.detached {
-            HostsFileManager.shared.requestAdminPrivileges()
-        }.value
     }
 
     private func verifyBlockingState() {

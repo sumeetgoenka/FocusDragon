@@ -31,23 +31,25 @@ class BlockListManager: ObservableObject {
     }
 
     func addDomain(_ domain: String) {
+        print("📝 BlockListManager.addDomain called with: '\(domain)'")
         // Clean the domain using the cleanDomain extension
         let cleaned = domain.cleanDomain
 
         // Validate domain format
         guard cleaned.isValidDomain else {
-            print("Invalid domain format: \(domain)")
+            print("📝 Invalid domain format: \(domain)")
             return
         }
 
         // Check if already exists
         guard !blockedItems.contains(where: { $0.domain == cleaned }) else {
-            print("Domain already exists: \(cleaned)")
+            print("📝 Domain already exists: \(cleaned)")
             return
         }
 
         let item = BlockItem(domain: cleaned)
         blockedItems.append(item)
+        print("📝 Domain added to blockedItems. New count: \(blockedItems.count)")
     }
 
     func removeDomain(at offsets: IndexSet) {

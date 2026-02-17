@@ -12,13 +12,13 @@ import AppKit
 /// Manages reading and writing to the system hosts file (/etc/hosts)
 @MainActor
 class HostsFileManager: ObservableObject {
-    static let shared = HostsFileManager()
+    nonisolated(unsafe) static let shared = HostsFileManager()
 
     private let hostsPath = "/etc/hosts"
     private let startMarker = "#### FocusDragon Block Start ####"
     private let endMarker = "#### FocusDragon Block End ####"
 
-    private init() {}
+    nonisolated private init() {}
 
     // MARK: - Public Methods
 
@@ -46,26 +46,6 @@ class HostsFileManager: ObservableObject {
         try flushDNSCache()
     }
 
-    /// Requests administrator privileges
-    func requestAdminPrivileges() -> Bool {
-        // Use osascript to prompt for sudo
-        let script = """
-        do shell script "echo 'FocusDragon requesting admin access'" with administrator privileges
-        """
-
-        let task = Process()
-        task.launchPath = "/usr/bin/osascript"
-        task.arguments = ["-e", script]
-
-        do {
-            try task.run()
-            task.waitUntilExit()
-            return task.terminationStatus == 0
-        } catch {
-            return false
-        }
-    }
-
     // MARK: - Private Methods
 
     private func readHostsFile() throws -> String {
@@ -73,18 +53,35 @@ class HostsFileManager: ObservableObject {
     }
 
     private func writeHostsFile(content: String) throws {
-        // This requires root privileges
-        // For Phase 1, we'll use a shell script with sudo
-        let tempFile = "/tmp/focusdragon_hosts_temp"
+        // Write to temp file in app's temp directory
+        let tempDir = NSTemporaryDirectory()
+        let tempFile = (tempDir as NSString).appendingPathComponent("focusdragon_hosts_temp")
         try content.write(toFile: tempFile, atomically: true, encoding: .utf8)
 
+        // Use osascript to copy with admin privileges
         let script = """
-        #!/bin/bash
-        sudo cp "\(tempFile)" "\(hostsPath)"
-        rm "\(tempFile)"
+        do shell script "cp '\(tempFile)' '\(hostsPath)' && rm '\(tempFile)'" with administrator privileges
         """
 
-        try runShellScript(script)
+        let task = Process()
+        task.launchPath = "/usr/bin/osascript"
+        task.arguments = ["-e", script]
+
+        let pipe = Pipe()
+        task.standardError = pipe
+
+        try task.run()
+        task.waitUntilExit()
+
+        if task.terminationStatus != 0 {
+            let errorData = pipe.fileHandleForReading.readDataToEndOfFile()
+            let errorString = String(data: errorData, encoding: .utf8) ?? "Unknown error"
+            throw NSError(
+                domain: "HostsFileManager",
+                code: Int(task.terminationStatus),
+                userInfo: [NSLocalizedDescriptionKey: errorString]
+            )
+        }
     }
 
     private func removeExistingBlock(from content: String) -> String {
@@ -121,46 +118,21 @@ class HostsFileManager: ObservableObject {
     }
 
     private func flushDNSCache() throws {
-        let task = Process()
-        task.launchPath = "/usr/bin/sudo"
-        task.arguments = ["dscacheutil", "-flushcache"]
-
-        try task.run()
-        task.waitUntilExit()
-
-        // Also flush mDNSResponder
-        let task2 = Process()
-        task2.launchPath = "/usr/bin/sudo"
-        task2.arguments = ["killall", "-HUP", "mDNSResponder"]
-
-        try task2.run()
-        task2.waitUntilExit()
-    }
-
-    private func runShellScript(_ script: String) throws {
-        let tempScript = "/tmp/focusdragon_script.sh"
-        try script.write(toFile: tempScript, atomically: true, encoding: .utf8)
+        // Use osascript to flush DNS with admin privileges
+        let script = """
+        do shell script "dscacheutil -flushcache && killall -HUP mDNSResponder" with administrator privileges
+        """
 
         let task = Process()
-        task.launchPath = "/bin/bash"
-        task.arguments = [tempScript]
-
-        let pipe = Pipe()
-        task.standardError = pipe
+        task.launchPath = "/usr/bin/osascript"
+        task.arguments = ["-e", script]
 
         try task.run()
         task.waitUntilExit()
 
         if task.terminationStatus != 0 {
-            let errorData = pipe.fileHandleForReading.readDataToEndOfFile()
-            let errorString = String(data: errorData, encoding: .utf8) ?? "Unknown error"
-            throw NSError(
-                domain: "HostsFileManager",
-                code: Int(task.terminationStatus),
-                userInfo: [NSLocalizedDescriptionKey: errorString]
-            )
+            // DNS flush failure is not critical, just log it
+            print("⚠️ DNS cache flush failed with status: \(task.terminationStatus)")
         }
-
-        try FileManager.default.removeItem(atPath: tempScript)
     }
 }
