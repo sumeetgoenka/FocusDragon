@@ -11,7 +11,9 @@ import SwiftUI
 struct FocusDragonApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            MainView()
         }
+        .windowStyle(.hiddenTitleBar)
+        .windowResizability(.contentSize)
     }
 }
