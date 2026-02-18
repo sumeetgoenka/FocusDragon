@@ -6,19 +6,69 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		B23523062F4583100052EEF9 /* HostsWatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23523022F4583100052EEF9 /* HostsWatcher.swift */; };
+		B23523072F4583100052EEF9 /* ProcessWatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23523042F4583100052EEF9 /* ProcessWatcher.swift */; };
+		B23523082F4583100052EEF9 /* DaemonService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23523012F4583100052EEF9 /* DaemonService.swift */; };
+		B23523092F4583100052EEF9 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23523032F4583100052EEF9 /* main.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		B23522EE2F45827B0052EEF9 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		B23522F02F45827B0052EEF9 /* FocusDragonDaemon */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = FocusDragonDaemon; sourceTree = BUILT_PRODUCTS_DIR; };
+		B23522FF2F4583100052EEF9 /* com.focusdragon.daemon.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = com.focusdragon.daemon.plist; sourceTree = "<group>"; };
+		B23523012F4583100052EEF9 /* DaemonService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DaemonService.swift; sourceTree = "<group>"; };
+		B23523022F4583100052EEF9 /* HostsWatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostsWatcher.swift; sourceTree = "<group>"; };
+		B23523032F4583100052EEF9 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		B23523042F4583100052EEF9 /* ProcessWatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcessWatcher.swift; sourceTree = "<group>"; };
 		B2B430922F433013006A41E3 /* FocusDragon.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FocusDragon.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		B235230B2F45833E0052EEF9 /* Exceptions for "FocusDragon" folder in "FocusDragonDaemon" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				FocusDragonSharedSharedModels.swift,
+			);
+			target = B23522EF2F45827B0052EEF9 /* FocusDragonDaemon */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		B23522F12F45827B0052EEF9 /* FocusDragonDaemon */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = FocusDragonDaemon;
+			sourceTree = "<group>";
+		};
 		B2B430942F433013006A41E3 /* FocusDragon */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				B235230B2F45833E0052EEF9 /* Exceptions for "FocusDragon" folder in "FocusDragonDaemon" target */,
+			);
 			path = FocusDragon;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		B23522ED2F45827B0052EEF9 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		B2B4308F2F433013006A41E3 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -29,10 +79,32 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		B23523002F4583100052EEF9 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				B23522FF2F4583100052EEF9 /* com.focusdragon.daemon.plist */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		B23523052F4583100052EEF9 /* FocusDragonDaemon */ = {
+			isa = PBXGroup;
+			children = (
+				B23523002F4583100052EEF9 /* Resources */,
+				B23523012F4583100052EEF9 /* DaemonService.swift */,
+				B23523022F4583100052EEF9 /* HostsWatcher.swift */,
+				B23523032F4583100052EEF9 /* main.swift */,
+				B23523042F4583100052EEF9 /* ProcessWatcher.swift */,
+			);
+			path = FocusDragonDaemon;
+			sourceTree = "<group>";
+		};
 		B2B430892F433012006A41E3 = {
 			isa = PBXGroup;
 			children = (
+				B23523052F4583100052EEF9 /* FocusDragonDaemon */,
 				B2B430942F433013006A41E3 /* FocusDragon */,
+				B23522F12F45827B0052EEF9 /* FocusDragonDaemon */,
 				B2B430932F433013006A41E3 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -41,6 +113,7 @@
 			isa = PBXGroup;
 			children = (
 				B2B430922F433013006A41E3 /* FocusDragon.app */,
+				B23522F02F45827B0052EEF9 /* FocusDragonDaemon */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -48,6 +121,28 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		B23522EF2F45827B0052EEF9 /* FocusDragonDaemon */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B23522F42F45827B0052EEF9 /* Build configuration list for PBXNativeTarget "FocusDragonDaemon" */;
+			buildPhases = (
+				B23522EC2F45827B0052EEF9 /* Sources */,
+				B23522ED2F45827B0052EEF9 /* Frameworks */,
+				B23522EE2F45827B0052EEF9 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				B23522F12F45827B0052EEF9 /* FocusDragonDaemon */,
+			);
+			name = FocusDragonDaemon;
+			packageProductDependencies = (
+			);
+			productName = FocusDragonDaemon;
+			productReference = B23522F02F45827B0052EEF9 /* FocusDragonDaemon */;
+			productType = "com.apple.product-type.tool";
+		};
 		B2B430912F433013006A41E3 /* FocusDragon */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = B2B4309D2F433016006A41E3 /* Build configuration list for PBXNativeTarget "FocusDragon" */;
@@ -80,6 +175,9 @@
 				LastSwiftUpdateCheck = 2620;
 				LastUpgradeCheck = 2620;
 				TargetAttributes = {
+					B23522EF2F45827B0052EEF9 = {
+						CreatedOnToolsVersion = 26.2;
+					};
 					B2B430912F433013006A41E3 = {
 						CreatedOnToolsVersion = 26.2;
 					};
@@ -100,6 +198,7 @@
 			projectRoot = "";
 			targets = (
 				B2B430912F433013006A41E3 /* FocusDragon */,
+				B23522EF2F45827B0052EEF9 /* FocusDragonDaemon */,
 			);
 		};
 /* End PBXProject section */
@@ -115,6 +214,17 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		B23522EC2F45827B0052EEF9 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B23523062F4583100052EEF9 /* HostsWatcher.swift in Sources */,
+				B23523072F4583100052EEF9 /* ProcessWatcher.swift in Sources */,
+				B23523082F4583100052EEF9 /* DaemonService.swift in Sources */,
+				B23523092F4583100052EEF9 /* main.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		B2B4308E2F433013006A41E3 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -125,6 +235,28 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
+		B23522F52F45827B0052EEF9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		B23522F62F45827B0052EEF9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
 		B2B4309B2F433016006A41E3 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -312,6 +444,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		B23522F42F45827B0052EEF9 /* Build configuration list for PBXNativeTarget "FocusDragonDaemon" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B23522F52F45827B0052EEF9 /* Debug */,
+				B23522F62F45827B0052EEF9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		B2B4308D2F433013006A41E3 /* Build configuration list for PBXProject "FocusDragon" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

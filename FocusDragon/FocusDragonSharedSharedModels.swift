@@ -44,3 +44,54 @@ public enum IPCMessage: Codable, Sendable {
     case getStatus
     case statusResponse(isActive: Bool, blockedCount: Int)
 }
+
+// MARK: - Daemon Configuration
+
+/// Configuration structure shared between app and daemon
+public struct DaemonConfig: Codable, Equatable, Sendable {
+    public var version: String
+    public var isBlocking: Bool
+    public var lastModified: Date
+    public var blockedDomains: [String]
+    public var blockedApps: [BlockedApp]
+    public var lockState: LockState?
+
+    public struct BlockedApp: Codable, Equatable, Sendable {
+        public let bundleIdentifier: String
+        public let appName: String
+
+        public init(bundleIdentifier: String, appName: String) {
+            self.bundleIdentifier = bundleIdentifier
+            self.appName = appName
+        }
+    }
+
+    public init(version: String = "1.0", isBlocking: Bool = false,
+                lastModified: Date = Date(), blockedDomains: [String] = [],
+                blockedApps: [BlockedApp] = [], lockState: LockState? = nil) {
+        self.version = version
+        self.isBlocking = isBlocking
+        self.lastModified = lastModified
+        self.blockedDomains = blockedDomains
+        self.blockedApps = blockedApps
+        self.lockState = lockState
+    }
+}
+
+/// Lock state for tamper-resistant blocking
+public struct LockState: Codable, Equatable, Sendable {
+    public var isLocked: Bool
+    public var lockType: String
+    public var expiresAt: Date?
+    public var randomText: String?
+    public var requireRestart: Bool
+
+    public init(isLocked: Bool, lockType: String, expiresAt: Date? = nil,
+                randomText: String? = nil, requireRestart: Bool = false) {
+        self.isLocked = isLocked
+        self.lockType = lockType
+        self.expiresAt = expiresAt
+        self.randomText = randomText
+        self.requireRestart = requireRestart
+    }
+}
