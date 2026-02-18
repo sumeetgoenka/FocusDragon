@@ -7,128 +7,322 @@
 
 import Foundation
 
-/// Monitors and protects the /etc/hosts file
-/// Full implementation will be completed in Phase 3.2
+/// Monitors and protects the /etc/hosts file from tampering
 class HostsWatcher {
     // MARK: - Configuration
 
     private let hostsPath = "/etc/hosts"
+    private let backupPath = "/Library/Application Support/FocusDragon/hosts.backup"
     private let startMarker = "#### FocusDragon Block Start ####"
     private let endMarker = "#### FocusDragon Block End ####"
+    private let checkInterval: TimeInterval = 5.0
 
     // MARK: - State
 
-    private var currentDomains: [String] = []
+    private var blockedDomains: [String] = []
     private var isBlocking = false
-    private var fileSource: DispatchSourceFileSystemObject?
+    private var timer: Timer?
+    private var lastModificationDate: Date?
 
     // MARK: - Public Methods
 
     func start() {
-        log("HostsWatcher started (stub implementation)", level: .info)
-        // Full implementation in Phase 3.2
+        log("HostsWatcher started", level: .info)
+
+        // Store initial modification date
+        updateLastModificationDate()
+
+        // Start monitoring timer
+        timer = Timer.scheduledTimer(
+            withTimeInterval: checkInterval,
+            repeats: true
+        ) { [weak self] _ in
+            self?.checkHostsFile()
+        }
+
+        // Add to run loop
+        if let timer = timer {
+            RunLoop.main.add(timer, forMode: .common)
+        }
+
+        log("Monitoring /etc/hosts every \(checkInterval) seconds", level: .info)
     }
 
     func stop() {
-        fileSource?.cancel()
-        fileSource = nil
+        timer?.invalidate()
+        timer = nil
         log("HostsWatcher stopped", level: .info)
     }
 
     func updateDomains(_ domains: [String], isBlocking: Bool) {
-        self.currentDomains = domains
+        self.blockedDomains = domains
         self.isBlocking = isBlocking
         log("Updated domains: \(domains.count) total, blocking=\(isBlocking)", level: .info)
 
-        // Apply blocks if needed
+        // Apply immediately
         if isBlocking && !domains.isEmpty {
-            applyBlocks()
+            applyBlock()
+        } else if !isBlocking {
+            removeBlock()
+        }
+    }
+
+    func createBackup() {
+        guard !FileManager.default.fileExists(atPath: backupPath) else {
+            log("Backup already exists", level: .info)
+            return
+        }
+
+        do {
+            try FileManager.default.copyItem(atPath: hostsPath, toPath: backupPath)
+            log("Hosts file backed up to \(backupPath)", level: .info)
+        } catch {
+            log("Backup failed: \(error.localizedDescription)", level: .error)
+        }
+    }
+
+    func restoreBackup() {
+        guard FileManager.default.fileExists(atPath: backupPath) else {
+            log("No backup to restore", level: .warning)
+            return
+        }
+
+        do {
+            let backupContent = try String(contentsOfFile: backupPath, encoding: .utf8)
+            try backupContent.write(toFile: hostsPath, atomically: true, encoding: .utf8)
+            flushDNSCache()
+            updateLastModificationDate()
+            log("Hosts file restored from backup", level: .info)
+        } catch {
+            log("Restore failed: \(error.localizedDescription)", level: .error)
+        }
+    }
+
+    // MARK: - Monitoring
+
+    private func checkHostsFile() {
+        guard isBlocking else { return }
+
+        let currentDate = getModificationDate()
+
+        // Check if file was modified externally
+        if let last = lastModificationDate,
+           let current = currentDate,
+           current > last {
+            log("Hosts file was modified externally!", level: .warning)
+            handleTampering()
+        }
+    }
+
+    private func handleTampering() {
+        // Check if our block section is still present
+        guard let content = readHostsFile(),
+              content.contains(startMarker) else {
+            log("Block section removed! Re-applying...", level: .warning)
+            applyBlock()
+            return
+        }
+
+        // Check if our entries are intact
+        if !verifyBlockIntegrity() {
+            log("Block section corrupted! Fixing...", level: .warning)
+            applyBlock()
         } else {
-            removeBlocks()
+            // File was modified but our section is intact (other entries changed)
+            log("External modification detected but FocusDragon section intact", level: .info)
+            updateLastModificationDate()
         }
     }
 
-    // MARK: - Private Methods
+    private func verifyBlockIntegrity() -> Bool {
+        guard let content = readHostsFile() else { return false }
 
-    private func applyBlocks() {
-        do {
-            // Read current hosts file
-            let hostsContent = try String(contentsOfFile: hostsPath, encoding: .utf8)
+        // Extract our block section
+        guard let blockSection = extractBlockSection(from: content) else {
+            log("Could not extract block section", level: .warning)
+            return false
+        }
 
-            // Remove existing FocusDragon blocks
-            let cleanedContent = removeExistingBlock(from: hostsContent)
+        // Verify all domains are present
+        for domain in blockedDomains {
+            let entry = "0.0.0.0 \(domain)"
+            if !blockSection.contains(entry) {
+                log("Missing entry: \(entry)", level: .warning)
+                return false
+            }
+        }
 
-            // Generate new block section
-            let blockSection = generateBlockSection()
+        return true
+    }
 
-            // Combine
-            let updatedContent = cleanedContent + "\n" + blockSection
+    // MARK: - Block Management
 
-            // Write back (daemon runs as root, no privilege escalation needed)
-            try updatedContent.write(toFile: hostsPath, atomically: true, encoding: .utf8)
+    private func applyBlock() {
+        guard isBlocking, !blockedDomains.isEmpty else {
+            log("Skipping block application (isBlocking=\(isBlocking), domains=\(blockedDomains.count))", level: .debug)
+            return
+        }
 
-            // Flush DNS cache
+        log("Applying hosts file block for \(blockedDomains.count) domains", level: .info)
+
+        // Read current hosts file
+        guard var hostsContent = readHostsFile() else {
+            log("ERROR: Could not read hosts file", level: .error)
+            return
+        }
+
+        // Remove existing block section
+        hostsContent = removeBlockSection(from: hostsContent)
+
+        // Generate new block section
+        let blockSection = generateBlockSection()
+
+        // Append block section
+        hostsContent += "\n" + blockSection
+
+        // Write to hosts file
+        if writeHostsFile(content: hostsContent) {
+            log("Hosts file updated successfully", level: .info)
             flushDNSCache()
-
-            log("Applied blocks for \(currentDomains.count) domains", level: .info)
-        } catch {
-            log("Failed to apply blocks: \(error.localizedDescription)", level: .error)
+            updateLastModificationDate()
+        } else {
+            log("ERROR: Failed to write hosts file", level: .error)
         }
     }
 
-    private func removeBlocks() {
-        do {
-            let hostsContent = try String(contentsOfFile: hostsPath, encoding: .utf8)
-            let cleanedContent = removeExistingBlock(from: hostsContent)
-            try cleanedContent.write(toFile: hostsPath, atomically: true, encoding: .utf8)
+    private func removeBlock() {
+        log("Removing hosts file block", level: .info)
+
+        guard var hostsContent = readHostsFile() else {
+            log("ERROR: Could not read hosts file", level: .error)
+            return
+        }
+
+        hostsContent = removeBlockSection(from: hostsContent)
+
+        if writeHostsFile(content: hostsContent) {
+            log("Block removed successfully", level: .info)
             flushDNSCache()
-            log("Removed all blocks", level: .info)
-        } catch {
-            log("Failed to remove blocks: \(error.localizedDescription)", level: .error)
+            updateLastModificationDate()
+        } else {
+            log("ERROR: Failed to write hosts file", level: .error)
         }
-    }
-
-    private func removeExistingBlock(from content: String) -> String {
-        var lines = content.components(separatedBy: .newlines)
-        var result: [String] = []
-        var inBlock = false
-
-        for line in lines {
-            if line.contains(startMarker) {
-                inBlock = true
-                continue
-            }
-            if line.contains(endMarker) {
-                inBlock = false
-                continue
-            }
-            if !inBlock {
-                result.append(line)
-            }
-        }
-
-        // Remove trailing empty lines
-        while result.last?.isEmpty == true {
-            result.removeLast()
-        }
-
-        return result.joined(separator: "\n")
     }
 
     private func generateBlockSection() -> String {
-        var section = [startMarker]
+        var lines = [startMarker]
 
-        for domain in currentDomains {
-            // Block both with and without www
-            section.append("0.0.0.0 \(domain)")
-            section.append("0.0.0.0 www.\(domain)")
+        for domain in blockedDomains {
+            lines.append("0.0.0.0 \(domain)")
+
+            // Also block www variant (but not if domain already starts with www)
+            if !domain.hasPrefix("www.") {
+                lines.append("0.0.0.0 www.\(domain)")
+            }
         }
 
-        section.append(endMarker)
-        return section.joined(separator: "\n")
+        lines.append(endMarker)
+        return lines.joined(separator: "\n")
     }
 
+    private func removeBlockSection(from content: String) -> String {
+        guard let startRange = content.range(of: startMarker),
+              let endRange = content.range(of: endMarker) else {
+            return content
+        }
+
+        var cleaned = content
+        let blockRange = startRange.lowerBound..<content.index(after: endRange.upperBound)
+        cleaned.removeSubrange(blockRange)
+
+        // Clean up extra newlines
+        while cleaned.hasSuffix("\n\n\n") {
+            cleaned = String(cleaned.dropLast())
+        }
+
+        return cleaned
+    }
+
+    private func extractBlockSection(from content: String) -> String? {
+        guard let startRange = content.range(of: startMarker),
+              let endRange = content.range(of: endMarker) else {
+            return nil
+        }
+
+        let blockRange = startRange.upperBound..<endRange.lowerBound
+        return String(content[blockRange])
+    }
+
+    // MARK: - File Operations
+
+    private func readHostsFile() -> String? {
+        do {
+            return try String(contentsOfFile: hostsPath, encoding: .utf8)
+        } catch {
+            log("Read error: \(error.localizedDescription)", level: .error)
+            return nil
+        }
+    }
+
+    private func writeHostsFile(content: String) -> Bool {
+        do {
+            try content.write(toFile: hostsPath, atomically: true, encoding: .utf8)
+
+            // Verify and fix permissions after writing
+            fixPermissions()
+
+            return true
+        } catch {
+            log("Write error: \(error.localizedDescription)", level: .error)
+            return false
+        }
+    }
+
+    private func getModificationDate() -> Date? {
+        let attrs = try? FileManager.default.attributesOfItem(atPath: hostsPath)
+        return attrs?[.modificationDate] as? Date
+    }
+
+    private func updateLastModificationDate() {
+        lastModificationDate = getModificationDate()
+        if let date = lastModificationDate {
+            log("Updated last modification date: \(date)", level: .debug)
+        }
+    }
+
+    // MARK: - File Permissions
+
+    private func verifyPermissions() -> Bool {
+        let attrs = try? FileManager.default.attributesOfItem(atPath: hostsPath)
+
+        guard let permissions = attrs?[.posixPermissions] as? NSNumber else {
+            return false
+        }
+
+        // /etc/hosts should be 644 (rw-r--r--)
+        let expected: UInt16 = 0o644
+        return permissions.uint16Value == expected
+    }
+
+    private func fixPermissions() {
+        guard !verifyPermissions() else { return }
+
+        let attrs: [FileAttributeKey: Any] = [
+            .posixPermissions: NSNumber(value: 0o644)
+        ]
+
+        do {
+            try FileManager.default.setAttributes(attrs, ofItemAtPath: hostsPath)
+            log("Permissions fixed to 644", level: .info)
+        } catch {
+            log("Failed to fix permissions: \(error.localizedDescription)", level: .warning)
+        }
+    }
+
+    // MARK: - DNS Cache
+
     private func flushDNSCache() {
+        // macOS DNS cache flush
         let task = Process()
         task.launchPath = "/usr/bin/dscacheutil"
         task.arguments = ["-flushcache"]
@@ -137,17 +331,20 @@ class HostsWatcher {
             try task.run()
             task.waitUntilExit()
 
-            // Also kill mDNSResponder
+            // Also kill mDNSResponder for good measure
             let killTask = Process()
             killTask.launchPath = "/usr/bin/killall"
             killTask.arguments = ["-HUP", "mDNSResponder"]
             try killTask.run()
+            killTask.waitUntilExit()
 
             log("DNS cache flushed", level: .debug)
         } catch {
             log("Failed to flush DNS cache: \(error.localizedDescription)", level: .warning)
         }
     }
+
+    // MARK: - Logging
 
     private func log(_ message: String, level: LogLevel = .info) {
         let timestamp = ISO8601DateFormatter().string(from: Date())

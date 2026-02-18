@@ -163,6 +163,11 @@ class DaemonService {
     private func startWatchers() {
         // Start hosts file watcher
         hostsWatcher = HostsWatcher()
+
+        // Create backup before first use
+        hostsWatcher?.createBackup()
+
+        // Apply current configuration
         if let config = currentConfig {
             hostsWatcher?.updateDomains(config.blockedDomains, isBlocking: config.isBlocking)
         }
