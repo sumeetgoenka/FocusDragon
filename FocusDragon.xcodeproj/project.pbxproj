@@ -11,6 +11,8 @@
 		B23523072F4583100052EEF9 /* ProcessWatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23523042F4583100052EEF9 /* ProcessWatcher.swift */; };
 		B23523082F4583100052EEF9 /* DaemonService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23523012F4583100052EEF9 /* DaemonService.swift */; };
 		B23523092F4583100052EEF9 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23523032F4583100052EEF9 /* main.swift */; };
+		B23525072F45D5B20052EEF9 /* daemon-binary in Resources */ = {isa = PBXBuildFile; fileRef = B23525062F45D5B20052EEF9 /* daemon-binary */; };
+		B23525082F45D5DC0052EEF9 /* com.focusdragon.daemon.plist in Resources */ = {isa = PBXBuildFile; fileRef = B23522FF2F4583100052EEF9 /* com.focusdragon.daemon.plist */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -32,6 +34,7 @@
 		B23523022F4583100052EEF9 /* HostsWatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostsWatcher.swift; sourceTree = "<group>"; };
 		B23523032F4583100052EEF9 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		B23523042F4583100052EEF9 /* ProcessWatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcessWatcher.swift; sourceTree = "<group>"; };
+		B23525062F45D5B20052EEF9 /* daemon-binary */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = "daemon-binary"; sourceTree = "<group>"; };
 		B2B430922F433013006A41E3 /* FocusDragon.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FocusDragon.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -102,6 +105,7 @@
 		B2B430892F433012006A41E3 = {
 			isa = PBXGroup;
 			children = (
+				B23525062F45D5B20052EEF9 /* daemon-binary */,
 				B23523052F4583100052EEF9 /* FocusDragonDaemon */,
 				B2B430942F433013006A41E3 /* FocusDragon */,
 				B23522F12F45827B0052EEF9 /* FocusDragonDaemon */,
@@ -208,6 +212,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B23525082F45D5DC0052EEF9 /* com.focusdragon.daemon.plist in Resources */,
+				B23525072F45D5B20052EEF9 /* daemon-binary in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

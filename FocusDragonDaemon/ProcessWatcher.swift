@@ -31,6 +31,8 @@ class ProcessWatcher {
     private var timer: Timer?
     private var blockedBundleIDs: Set<String> = []
     private var isBlocking = false
+    private var terminationCount: [String: Int] = [:]
+    private var respawnDetection: [String: Date] = [:]
 
     // MARK: - Public Methods
 
@@ -66,6 +68,15 @@ class ProcessWatcher {
         log("Updated apps: \(safeIDs.count) blocked, blocking=\(isBlocking)", level: .info)
     }
 
+    func getStatistics() -> [String: Int] {
+        return terminationCount
+    }
+
+    func resetStatistics() {
+        terminationCount.removeAll()
+        log("Statistics reset", level: .info)
+    }
+
     // MARK: - Private Methods
 
     private func scanProcesses() {
@@ -84,8 +95,22 @@ class ProcessWatcher {
     }
 
     private func terminateApp(_ app: NSRunningApplication, bundleID: String) {
+        // Check for rapid respawning
+        if let lastTermination = respawnDetection[bundleID],
+           Date().timeIntervalSince(lastTermination) < 10 {
+            let interval = Date().timeIntervalSince(lastTermination)
+            log("WARNING: \(bundleID) is respawning rapidly (interval: \(String(format: "%.1f", interval))s)", level: .warning)
+            handleRespawning(bundleID)
+        }
+
+        // Record this termination timestamp
+        respawnDetection[bundleID] = Date()
+
         let appName = app.localizedName ?? bundleID
         log("Terminating blocked app: \(appName) (\(bundleID))", level: .info)
+
+        // Increment termination count
+        terminationCount[bundleID, default: 0] += 1
 
         // Try graceful termination first
         let terminated = app.terminate()
@@ -109,6 +134,28 @@ class ProcessWatcher {
             log("Successfully force-killed PID \(pid)", level: .info)
         } else {
             log("Failed to force-kill PID \(pid): error \(result)", level: .error)
+        }
+    }
+
+    private func handleRespawning(_ bundleID: String) {
+        log("Checking for launch agents/daemons for \(bundleID)", level: .info)
+
+        let possiblePaths = [
+            "/Library/LaunchAgents/\(bundleID).plist",
+            "/Library/LaunchDaemons/\(bundleID).plist",
+            NSHomeDirectory() + "/Library/LaunchAgents/\(bundleID).plist"
+        ]
+
+        var foundAgent = false
+        for path in possiblePaths {
+            if FileManager.default.fileExists(atPath: path) {
+                log("Found launch agent/daemon at: \(path)", level: .warning)
+                foundAgent = true
+            }
+        }
+
+        if !foundAgent {
+            log("No launch agents found for \(bundleID) - app may have built-in auto-restart", level: .info)
         }
     }
 
