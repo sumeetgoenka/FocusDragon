@@ -9,61 +9,21 @@ import SwiftUI
 
 struct MainView: View {
     @StateObject private var manager = BlockListManager()
-    @State private var newDomain: String = ""
     @State private var showingAlert = false
     @State private var alertMessage = ""
     @State private var isProcessing = false
-    @State private var domainValidationError: String?
 
     var body: some View {
-        let _ = print("📱 View updated - blockedItems count: \(manager.blockedItems.count), isBlocking: \(manager.isBlocking)")
         VStack(spacing: 20) {
             Text("FocusDragon")
                 .font(.largeTitle)
                 .fontWeight(.bold)
 
-            // Add domain section
-            VStack(spacing: 8) {
-                HStack {
-                    TextField("Enter domain (e.g., youtube.com)", text: $newDomain)
-                        .textFieldStyle(.roundedBorder)
-                        .onChange(of: newDomain) {
-                            domainValidationError = nil
-                        }
-                        .onSubmit {
-                            addDomain()
-                        }
+            // Block list (now supports both websites and apps)
+            BlockListView(manager: manager)
+                .frame(minHeight: 300)
 
-                    Button("Add") {
-                        addDomain()
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(newDomain.isEmpty)
-                }
-                .padding(.horizontal)
-
-                if let error = domainValidationError {
-                    Text(error)
-                        .font(.caption)
-                        .foregroundColor(.red)
-                        .padding(.horizontal)
-                }
-            }
-
-            // Block list
-            List {
-                ForEach(manager.blockedItems) { item in
-                    HStack {
-                        Text(item.domain)
-                        Spacer()
-                        Toggle("", isOn: binding(for: item))
-                    }
-                }
-                .onDelete(perform: manager.removeDomain)
-            }
-            .frame(minHeight: 200)
-
-            // Status indicator
+            // Status and controls
             HStack {
                 Circle()
                     .fill(manager.isBlocking ? Color.green : Color.gray)
@@ -73,17 +33,13 @@ struct MainView: View {
                     .foregroundColor(.secondary)
             }
 
-            // Control buttons
             HStack(spacing: 20) {
-                let isDisabled = isProcessing || manager.blockedItems.isEmpty
-                let _ = print("🔘 Button state - disabled: \(isDisabled), isProcessing: \(isProcessing), isEmpty: \(manager.blockedItems.isEmpty)")
-
                 Button(manager.isBlocking ? "Stop Block" : "Start Block") {
                     toggleBlocking()
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(manager.isBlocking ? .red : .green)
-                .disabled(isDisabled)
+                .disabled(isProcessing || manager.blockedItems.isEmpty)
 
                 if isProcessing {
                     ProgressView()
@@ -92,7 +48,7 @@ struct MainView: View {
             }
             .padding()
         }
-        .frame(minWidth: 500, minHeight: 400)
+        .frame(minWidth: 600, minHeight: 500)
         .padding()
         .alert("Error", isPresented: $showingAlert) {
             Button("OK", role: .cancel) { }
@@ -102,42 +58,6 @@ struct MainView: View {
         .onAppear {
             verifyBlockingState()
         }
-    }
-
-    private func addDomain() {
-        print("➕ addDomain called with: '\(newDomain)'")
-        let cleaned = newDomain.cleanDomain
-        print("➕ Cleaned domain: '\(cleaned)'")
-
-        guard !cleaned.isEmpty else {
-            print("➕ Domain is empty after cleaning")
-            return
-        }
-
-        guard cleaned.isValidDomain else {
-            print("➕ Domain validation failed")
-            domainValidationError = "Invalid domain format. Use: example.com"
-            return
-        }
-
-        if manager.blockedItems.contains(where: { $0.domain == cleaned }) {
-            print("➕ Domain already exists in list")
-            domainValidationError = "Domain already in block list"
-            return
-        }
-
-        print("➕ Adding domain to manager")
-        manager.addDomain(cleaned)
-        newDomain = ""
-        domainValidationError = nil
-        print("➕ Domain added successfully. Total domains: \(manager.blockedItems.count)")
-    }
-
-    private func binding(for item: BlockItem) -> Binding<Bool> {
-        Binding(
-            get: { item.isEnabled },
-            set: { _ in manager.toggleDomain(id: item.id) }
-        )
     }
 
     private func toggleBlocking() {
@@ -169,34 +89,57 @@ struct MainView: View {
     private func startBlocking() async throws {
         print("🚀 In startBlocking()")
         let enabledDomains = manager.blockedItems
-            .filter { $0.isEnabled }
-            .map { $0.domain }
+            .filter { $0.isEnabled && $0.type == .website }
+            .compactMap { $0.domain }
+
+        let enabledApps = manager.blockedItems
+            .filter { $0.isEnabled && $0.type == .application }
 
         print("🚀 Enabled domains: \(enabledDomains)")
+        print("🚀 Enabled apps: \(enabledApps.count)")
 
-        guard !enabledDomains.isEmpty else {
-            print("🚀 No enabled domains!")
+        guard !enabledDomains.isEmpty || !enabledApps.isEmpty else {
+            print("🚀 No enabled items!")
             throw BlockError.noDomains
         }
 
-        // Apply block (osascript will prompt for password)
-        print("🚀 Applying block...")
-        try await MainActor.run {
-            try HostsFileManager.shared.applyBlock(domains: enabledDomains)
+        // Apply website blocks if needed
+        if !enabledDomains.isEmpty {
+            print("🚀 Applying website blocks...")
+            try await MainActor.run {
+                try HostsFileManager.shared.applyBlock(domains: enabledDomains)
+            }
+        }
+
+        // Start process monitoring for apps
+        if !enabledApps.isEmpty {
+            print("🚀 Starting app monitoring...")
+            await MainActor.run {
+                ProcessMonitor.shared.startMonitoring(blockedApps: enabledApps)
+            }
         }
 
         await MainActor.run {
             manager.isBlocking = true
+            manager.startBlockingSession()
+            NotificationHelper.shared.showBlockingStarted()
         }
     }
 
     private func stopBlocking() async throws {
+        print("🚀 Stopping blocking...")
+
+        // Stop process monitoring
+        ProcessMonitor.shared.stopMonitoring()
+
+        // Remove hosts file blocks
         try await MainActor.run {
             try HostsFileManager.shared.removeBlock()
         }
 
         await MainActor.run {
             manager.isBlocking = false
+            NotificationHelper.shared.showBlockingStopped()
         }
     }
 
@@ -231,7 +174,7 @@ enum BlockError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .noDomains:
-            return "No domains enabled for blocking"
+            return "No websites or apps enabled for blocking"
         case .privilegesDenied:
             return "Administrator privileges are required to modify the hosts file"
         }

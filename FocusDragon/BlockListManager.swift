@@ -21,10 +21,12 @@ class BlockListManager: ObservableObject {
             saveState()
         }
     }
+    @Published var stats = BlockStats()
 
     private let userDefaults = UserDefaults.standard
     private let blockedItemsKey = "blockedItems"
     private let isBlockingKey = "isBlocking"
+    private let statsKey = "blockStats"
 
     init() {
         loadState()
@@ -64,11 +66,41 @@ class BlockListManager: ObservableObject {
         }
     }
 
+    func addApplication(_ app: BlockItem) {
+        guard app.type == .application else { return }
+
+        // Check for duplicates
+        if blockedItems.contains(where: {
+            $0.type == .application && $0.bundleIdentifier == app.bundleIdentifier
+        }) {
+            return
+        }
+
+        blockedItems.append(app)
+    }
+
+    func getWebsites() -> [BlockItem] {
+        blockedItems.filter { $0.type == .website }
+    }
+
+    func getApplications() -> [BlockItem] {
+        blockedItems.filter { $0.type == .application }
+    }
+
+    func startBlockingSession() {
+        stats.startSession()
+        saveState()
+    }
+
     private func saveState() {
         if let encoded = try? JSONEncoder().encode(blockedItems) {
             userDefaults.set(encoded, forKey: blockedItemsKey)
         }
         userDefaults.set(isBlocking, forKey: isBlockingKey)
+
+        if let encoded = try? JSONEncoder().encode(stats) {
+            userDefaults.set(encoded, forKey: statsKey)
+        }
     }
 
     private func loadState() {
@@ -77,5 +109,10 @@ class BlockListManager: ObservableObject {
             blockedItems = decoded
         }
         isBlocking = userDefaults.bool(forKey: isBlockingKey)
+
+        if let data = userDefaults.data(forKey: statsKey),
+           let decoded = try? JSONDecoder().decode(BlockStats.self, from: data) {
+            stats = decoded
+        }
     }
 }
