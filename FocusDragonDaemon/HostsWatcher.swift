@@ -232,7 +232,18 @@ class HostsWatcher {
         }
 
         var cleaned = content
-        let blockRange = startRange.lowerBound..<content.index(after: endRange.upperBound)
+
+        // Safely calculate the end of the block range
+        // Include the newline after the end marker if it exists
+        let blockEnd: String.Index
+        if endRange.upperBound < content.endIndex,
+           content[endRange.upperBound] == "\n" {
+            blockEnd = content.index(after: endRange.upperBound)
+        } else {
+            blockEnd = endRange.upperBound
+        }
+
+        let blockRange = startRange.lowerBound..<blockEnd
         cleaned.removeSubrange(blockRange)
 
         // Clean up extra newlines
