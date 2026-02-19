@@ -1,0 +1,20 @@
+# Build artifacts
+build/
+*.o
+*.d
+*.dia
+
+# Compiled binaries
+daemon-binary
+FocusDragonDaemon/FocusDragonDaemon
+
+# Xcode user data
+*.xcuserstate
+xcuserdata/
+*.xcscmblueprint
+
+# macOS
+.DS_Store
+
+# Swift Package Manager
+.build/
