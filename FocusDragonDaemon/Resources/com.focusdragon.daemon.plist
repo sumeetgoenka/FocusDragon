@@ -2,15 +2,14 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <!-- Unique identifier -->
+    <!-- Label must match the plist filename (minus .plist) -->
     <key>Label</key>
     <string>com.focusdragon.daemon</string>
 
-    <!-- Path to daemon executable -->
-    <key>ProgramArguments</key>
-    <array>
-        <string>/Library/Application Support/FocusDragon/FocusDragonDaemon</string>
-    </array>
+    <!-- SMAppService manages the actual path at runtime.
+         BundleProgram tells it which executable inside the app bundle to use. -->
+    <key>BundleProgram</key>
+    <string>Contents/MacOS/FocusDragonDaemon</string>
 
     <!-- Run at system startup -->
     <key>RunAtLoad</key>
@@ -18,25 +17,9 @@
 
     <!-- Keep daemon running, restart if crashes -->
     <key>KeepAlive</key>
-    <dict>
-        <!-- Always try to keep alive -->
-        <key>SuccessfulExit</key>
-        <false/>
+    <true/>
 
-        <!-- Restart after crashes -->
-        <key>Crashed</key>
-        <true/>
-    </dict>
-
-    <!-- Run as root user -->
-    <key>UserName</key>
-    <string>root</string>
-
-    <!-- Run in root's group -->
-    <key>GroupName</key>
-    <string>wheel</string>
-
-    <!-- Standard output (combined with daemon's own logging) -->
+    <!-- Standard output -->
     <key>StandardOutPath</key>
     <string>/var/log/focusdragon/daemon-stdout.log</string>
 
@@ -44,38 +27,8 @@
     <key>StandardErrorPath</key>
     <string>/var/log/focusdragon/daemon-stderr.log</string>
 
-    <!-- Prevent rapid restart loops if daemon crashes repeatedly -->
+    <!-- Prevent rapid restart loops -->
     <key>ThrottleInterval</key>
     <integer>5</integer>
-
-    <!-- Resource limits (prevent resource exhaustion) -->
-    <key>HardResourceLimits</key>
-    <dict>
-        <key>NumberOfFiles</key>
-        <integer>512</integer>
-        <key>NumberOfProcesses</key>
-        <integer>10</integer>
-    </dict>
-
-    <key>SoftResourceLimits</key>
-    <dict>
-        <key>NumberOfFiles</key>
-        <integer>256</integer>
-    </dict>
-
-    <!-- Lower priority (don't compete with critical system services) -->
-    <key>Nice</key>
-    <integer>10</integer>
-
-    <!-- Working directory -->
-    <key>WorkingDirectory</key>
-    <string>/Library/Application Support/FocusDragon</string>
-
-    <!-- Environment variables -->
-    <key>EnvironmentVariables</key>
-    <dict>
-        <key>PATH</key>
-        <string>/usr/bin:/bin:/usr/sbin:/sbin</string>
-    </dict>
 </dict>
 </plist>

@@ -11,8 +11,8 @@ import AppKit
 
 /// Manages reading and writing to the system hosts file (/etc/hosts)
 @MainActor
-class HostsFileManager: ObservableObject {
-    nonisolated(unsafe) static let shared = HostsFileManager()
+class HostsFileManager: ObservableObject, @unchecked Sendable {
+    static let shared = HostsFileManager()
 
     private let hostsPath = "/etc/hosts"
     private let startMarker = "#### FocusDragon Block Start ####"

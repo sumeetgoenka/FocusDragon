@@ -13,11 +13,23 @@ struct MainView: View {
     @State private var alertMessage = ""
     @State private var isProcessing = false
 
+    @State private var showSettings = false
+
     var body: some View {
         VStack(spacing: 20) {
-            Text("FocusDragon")
-                .font(.largeTitle)
-                .fontWeight(.bold)
+            HStack {
+                Spacer()
+                Text("FocusDragon")
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+                Spacer()
+                Button(action: { showSettings = true }) {
+                    Image(systemName: "gearshape")
+                        .font(.title2)
+                }
+                .buttonStyle(.plain)
+                .help("Settings")
+            }
 
             // Block list (now supports both websites and apps)
             BlockListView(manager: manager)
@@ -58,23 +70,23 @@ struct MainView: View {
         .onAppear {
             verifyBlockingState()
         }
+        .sheet(isPresented: $showSettings) {
+            SettingsView()
+                .frame(minWidth: 450, minHeight: 350)
+        }
     }
 
     private func toggleBlocking() {
-        print("🚀 Toggle blocking clicked")
         isProcessing = true
 
         Task {
             do {
                 if manager.isBlocking {
-                    print("🚀 Stopping blocking...")
                     try await stopBlocking()
                 } else {
-                    print("🚀 Starting blocking...")
                     try await startBlocking()
                 }
             } catch {
-                print("🚀 Error occurred: \(error)")
                 await MainActor.run {
                     showError(error)
                 }
@@ -87,7 +99,6 @@ struct MainView: View {
     }
 
     private func startBlocking() async throws {
-        print("🚀 In startBlocking()")
         let enabledDomains = manager.blockedItems
             .filter { $0.isEnabled && $0.type == .website }
             .compactMap { $0.domain }
@@ -95,31 +106,27 @@ struct MainView: View {
         let enabledApps = manager.blockedItems
             .filter { $0.isEnabled && $0.type == .application }
 
-        print("🚀 Enabled domains: \(enabledDomains)")
-        print("🚀 Enabled apps: \(enabledApps.count)")
-
         guard !enabledDomains.isEmpty || !enabledApps.isEmpty else {
-            print("🚀 No enabled items!")
             throw BlockError.noDomains
         }
 
-        // Apply website blocks if needed
-        if !enabledDomains.isEmpty {
-            print("🚀 Applying website blocks...")
-            try await MainActor.run {
-                try HostsFileManager.shared.applyBlock(domains: enabledDomains)
-            }
+        // Website blocking is handled entirely by the daemon (runs as root, writes /etc/hosts).
+        // No osascript, no password prompts — ever.
+        if !enabledDomains.isEmpty && !DaemonInstaller.shared.isDaemonRunning {
+            throw BlockError.daemonNotRunning
         }
 
-        // Start process monitoring for apps
+        // Start in-app process monitoring (no root required).
         if !enabledApps.isEmpty {
-            print("🚀 Starting app monitoring...")
             await MainActor.run {
                 ProcessMonitor.shared.startMonitoring(blockedApps: enabledApps)
             }
         }
 
         await MainActor.run {
+            // isBlocking = true triggers saveState() → writeDaemonConfig().
+            // Daemon picks up the new config.json within ~2 seconds and applies
+            // the /etc/hosts block with no password prompt.
             manager.isBlocking = true
             manager.startBlockingSession()
             NotificationHelper.shared.showBlockingStarted()
@@ -127,36 +134,24 @@ struct MainView: View {
     }
 
     private func stopBlocking() async throws {
-        print("🚀 Stopping blocking...")
-
-        // Stop process monitoring
         ProcessMonitor.shared.stopMonitoring()
 
-        // Remove hosts file blocks
-        try await MainActor.run {
-            try HostsFileManager.shared.removeBlock()
-        }
-
         await MainActor.run {
+            // isBlocking = false → writeDaemonConfig() → daemon removes /etc/hosts block.
             manager.isBlocking = false
             NotificationHelper.shared.showBlockingStopped()
         }
     }
 
     private func verifyBlockingState() {
-        // Check if hosts file has our markers
-        let hostsContent = try? String(contentsOfFile: "/etc/hosts", encoding: .utf8)
-        let hasMarkers = hostsContent?.contains("#### FocusDragon Block Start ####") ?? false
+        // Push current state to config.json on launch so the daemon is in sync.
+        manager.syncWithDaemon()
 
-        if manager.isBlocking && !hasMarkers {
-            // Block should be active but isn't - reapply
-            Task {
-                try? await startBlocking()
-            }
-        } else if !manager.isBlocking && hasMarkers {
-            // Block shouldn't be active but is - remove
-            Task {
-                try? await stopBlocking()
+        // Restart in-app process monitoring if a session is already active.
+        if manager.isBlocking {
+            let enabledApps = manager.blockedItems.filter { $0.isEnabled && $0.type == .application }
+            if !enabledApps.isEmpty {
+                ProcessMonitor.shared.startMonitoring(blockedApps: enabledApps)
             }
         }
     }
@@ -169,14 +164,14 @@ struct MainView: View {
 
 enum BlockError: LocalizedError {
     case noDomains
-    case privilegesDenied
+    case daemonNotRunning
 
     var errorDescription: String? {
         switch self {
         case .noDomains:
             return "No websites or apps enabled for blocking"
-        case .privilegesDenied:
-            return "Administrator privileges are required to modify the hosts file"
+        case .daemonNotRunning:
+            return "The background service is not running. Go to Settings → Set Up Permissions to enable it."
         }
     }
 }

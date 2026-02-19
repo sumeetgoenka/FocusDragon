@@ -8,45 +8,91 @@
 import SwiftUI
 
 struct SettingsView: View {
+    @Environment(\.dismiss) private var dismiss
     @State private var showUninstallAlert = false
-    @State private var isUninstalling = false
+    @State private var showSetup = false
+    @State private var uninstallError: String?
+    @State private var showUninstallError = false
+
+    private let installer = DaemonInstaller.shared
 
     var body: some View {
         Form {
-            Section("System Daemon") {
+            // MARK: - Background Service
+            Section("Background Service") {
                 DaemonStatusView()
 
-                if DaemonInstaller.shared.isDaemonInstalled() {
-                    Button("Uninstall Daemon", role: .destructive) {
+                if installer.isDaemonInstalled {
+                    Button("Unregister Service", role: .destructive) {
                         showUninstallAlert = true
                     }
-                    .disabled(isUninstalling)
+                } else {
+                    Button("Set Up Permissions") {
+                        showSetup = true
+                    }
                 }
             }
 
+            // MARK: - Permissions
+            Section("System Permissions") {
+                Button(action: { installer.openFullDiskAccessSettings() }) {
+                    HStack {
+                        Label("Full Disk Access", systemImage: "lock.doc")
+                        Spacer()
+                        Image(systemName: "arrow.up.forward.square")
+                            .foregroundColor(.secondary)
+                    }
+                }
+                .buttonStyle(.plain)
+
+                Button(action: { installer.openLoginItemsSettings() }) {
+                    HStack {
+                        Label("Login Items", systemImage: "gearshape.arrow.triangle.2.circlepath")
+                        Spacer()
+                        Image(systemName: "arrow.up.forward.square")
+                            .foregroundColor(.secondary)
+                    }
+                }
+                .buttonStyle(.plain)
+            }
+
+            // MARK: - About
             Section("About") {
                 LabeledContent("Version", value: "1.0.0")
-                LabeledContent("Daemon Status", value: DaemonInstaller.shared.isDaemonRunning() ? "Running" : "Not Running")
+                LabeledContent("Service Status", value: installer.status.displayName)
             }
         }
         .formStyle(.grouped)
-        .frame(minWidth: 400, minHeight: 300)
-        .alert("Uninstall Daemon", isPresented: $showUninstallAlert) {
+        .frame(minWidth: 420, minHeight: 350)
+        .toolbar {
+            ToolbarItem(placement: .confirmationAction) {
+                Button("Done") { dismiss() }
+            }
+        }
+        .sheet(isPresented: $showSetup) {
+            DaemonSetupView()
+        }
+        .alert("Unregister Service", isPresented: $showUninstallAlert) {
             Button("Cancel", role: .cancel) { }
-            Button("Uninstall", role: .destructive) {
-                uninstallDaemon()
+            Button("Unregister", role: .destructive) {
+                unregisterDaemon()
             }
         } message: {
-            Text("This will stop and remove the system daemon. Blocking will only work when the app is running.")
+            Text("This will stop the background service. Blocking will only work while the app is open.")
+        }
+        .alert("Error", isPresented: $showUninstallError) {
+            Button("OK") { }
+        } message: {
+            Text(uninstallError ?? "Unknown error")
         }
     }
 
-    private func uninstallDaemon() {
-        isUninstalling = true
-
-        DaemonInstaller.shared.uninstall { result in
-            isUninstalling = false
-            // Could show success/error alert here
+    private func unregisterDaemon() {
+        do {
+            try installer.unregister()
+        } catch {
+            uninstallError = error.localizedDescription
+            showUninstallError = true
         }
     }
 }

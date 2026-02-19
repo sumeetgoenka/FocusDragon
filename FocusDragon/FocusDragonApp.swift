@@ -27,6 +27,10 @@ struct FocusDragonApp: App {
         .commands {
             CommandGroup(replacing: .newItem) { }
         }
+
+        Settings {
+            SettingsView()
+        }
     }
 }
 

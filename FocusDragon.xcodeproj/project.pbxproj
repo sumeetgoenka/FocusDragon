@@ -7,12 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		B23523062F4583100052EEF9 /* HostsWatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23523022F4583100052EEF9 /* HostsWatcher.swift */; };
-		B23523072F4583100052EEF9 /* ProcessWatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23523042F4583100052EEF9 /* ProcessWatcher.swift */; };
-		B23523082F4583100052EEF9 /* DaemonService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23523012F4583100052EEF9 /* DaemonService.swift */; };
-		B23523092F4583100052EEF9 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23523032F4583100052EEF9 /* main.swift */; };
-		B23525072F45D5B20052EEF9 /* daemon-binary in Resources */ = {isa = PBXBuildFile; fileRef = B23525062F45D5B20052EEF9 /* daemon-binary */; };
-		B23525082F45D5DC0052EEF9 /* com.focusdragon.daemon.plist in Resources */ = {isa = PBXBuildFile; fileRef = B23522FF2F4583100052EEF9 /* com.focusdragon.daemon.plist */; };
+		B2DAEM012F45E0000052EEF9 /* com.focusdragon.daemon.plist in Copy LaunchDaemon Plist */ = {isa = PBXBuildFile; fileRef = B23522FF2F4583100052EEF9 /* com.focusdragon.daemon.plist */; };
+		B2DAEM022F45E0000052EEF9 /* FocusDragonDaemon in Copy Daemon Executable */ = {isa = PBXBuildFile; fileRef = B23522F02F45827B0052EEF9 /* FocusDragonDaemon */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -24,6 +20,28 @@
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 1;
+		};
+		B2DAEM032F45E0000052EEF9 /* Copy LaunchDaemon Plist */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = Contents/Library/LaunchDaemons;
+			dstSubfolderSpec = 1;
+			files = (
+				B2DAEM012F45E0000052EEF9 /* com.focusdragon.daemon.plist in Copy LaunchDaemon Plist */,
+			);
+			name = "Copy LaunchDaemon Plist";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B2DAEM042F45E0000052EEF9 /* Copy Daemon Executable */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 6;
+			files = (
+				B2DAEM022F45E0000052EEF9 /* FocusDragonDaemon in Copy Daemon Executable */,
+			);
+			name = "Copy Daemon Executable";
+			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
 
@@ -80,6 +98,24 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXContainerItemProxy section */
+		B2DAEM052F45E0000052EEF9 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = B2B4308A2F433013006A41E3 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B23522EF2F45827B0052EEF9;
+			remoteInfo = FocusDragonDaemon;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXTargetDependency section */
+		B2DAEM062F45E0000052EEF9 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B23522EF2F45827B0052EEF9 /* FocusDragonDaemon */;
+			targetProxy = B2DAEM052F45E0000052EEF9 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin PBXGroup section */
 		B23523002F4583100052EEF9 /* Resources */ = {
@@ -154,10 +190,13 @@
 				B2B4308E2F433013006A41E3 /* Sources */,
 				B2B4308F2F433013006A41E3 /* Frameworks */,
 				B2B430902F433013006A41E3 /* Resources */,
+				B2DAEM032F45E0000052EEF9 /* Copy LaunchDaemon Plist */,
+				B2DAEM042F45E0000052EEF9 /* Copy Daemon Executable */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				B2DAEM062F45E0000052EEF9 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				B2B430942F433013006A41E3 /* FocusDragon */,
@@ -212,8 +251,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B23525082F45D5DC0052EEF9 /* com.focusdragon.daemon.plist in Resources */,
-				B23525072F45D5B20052EEF9 /* daemon-binary in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -224,10 +261,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B23523062F4583100052EEF9 /* HostsWatcher.swift in Sources */,
-				B23523072F4583100052EEF9 /* ProcessWatcher.swift in Sources */,
-				B23523082F4583100052EEF9 /* DaemonService.swift in Sources */,
-				B23523092F4583100052EEF9 /* main.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -244,8 +277,12 @@
 		B23522F52F45827B0052EEF9 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Manual;
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = 9STH9GD9MP;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
@@ -255,8 +292,12 @@
 		B23522F62F45827B0052EEF9 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Manual;
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = 9STH9GD9MP;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;

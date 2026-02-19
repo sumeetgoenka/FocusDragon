@@ -195,12 +195,10 @@ class DaemonService {
     // MARK: - Utilities
 
     private func createDirectories() {
-        let dirs = [
-            "/Library/Application Support/FocusDragon",
-            "/var/log/focusdragon"
-        ]
+        let configDir = "/Library/Application Support/FocusDragon"
+        let logDir = "/var/log/focusdragon"
 
-        for dir in dirs {
+        for dir in [configDir, logDir] {
             do {
                 try FileManager.default.createDirectory(
                     atPath: dir,
@@ -212,6 +210,11 @@ class DaemonService {
                 log("Failed to create directory \(dir): \(error.localizedDescription)", level: .error)
             }
         }
+
+        // Make config dir world-writable so the main app (running as user) can write
+        // config.json without any privilege escalation or password prompts.
+        let attrs: [FileAttributeKey: Any] = [.posixPermissions: NSNumber(value: 0o777)]
+        try? FileManager.default.setAttributes(attrs, ofItemAtPath: configDir)
     }
 
     private func setupLogging() {

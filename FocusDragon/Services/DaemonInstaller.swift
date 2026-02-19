@@ -6,134 +6,119 @@
 //
 
 import Foundation
+import AppKit
+import ServiceManagement
 
-class DaemonInstaller {
+/// Manages daemon lifecycle using SMAppService (no admin password required).
+///
+/// **Xcode Setup Required:**
+/// 1. Place the daemon plist at `Contents/Library/LaunchDaemons/com.focusdragon.daemon.plist`
+///    in the main app bundle (add a "Copy Files" build phase → Absolute Path: `Contents/Library/LaunchDaemons`).
+/// 2. Place the daemon executable in `Contents/MacOS/` of the main app bundle
+///    (add FocusDragonDaemon as a dependency of the FocusDragon target and add a "Copy Files"
+///    build phase → Destination: Executables).
+/// 3. Both the app and daemon must be signed with the same Team ID.
+@Observable
+final class DaemonInstaller {
     static let shared = DaemonInstaller()
 
-    private let daemonPlistPath = "/Library/LaunchDaemons/com.focusdragon.daemon.plist"
+    private let daemonService = SMAppService.daemon(plistName: "com.focusdragon.daemon.plist")
 
-    private init() {}
+    // MARK: - Published State
 
-    // MARK: - Status Checking
+    private(set) var status: ServiceStatus = .notRegistered
 
-    func isDaemonInstalled() -> Bool {
-        return FileManager.default.fileExists(atPath: daemonPlistPath)
-    }
+    enum ServiceStatus: Equatable {
+        case notRegistered
+        case enabled
+        case requiresApproval
+        case notFound
+        case unknown(String)
 
-    func isDaemonRunning() -> Bool {
-        let task = Process()
-        task.launchPath = "/bin/launchctl"
-        task.arguments = ["list", "com.focusdragon.daemon"]
-
-        let pipe = Pipe()
-        task.standardOutput = pipe
-        task.standardError = Pipe()
-
-        do {
-            try task.run()
-            task.waitUntilExit()
-            return task.terminationStatus == 0
-        } catch {
-            return false
-        }
-    }
-
-    // MARK: - Installation
-
-    func install(completion: @escaping (Result<Void, Error>) -> Void) {
-        // Get script path from bundle
-        guard let scriptPath = Bundle.main.path(forResource: "install-daemon", ofType: "sh") else {
-            completion(.failure(InstallError.scriptNotFound))
-            return
-        }
-
-        // Get daemon binary and plist paths (built into app bundle)
-        guard let daemonPath = getDaemonPath(),
-              let plistPath = getPlistPath() else {
-            completion(.failure(InstallError.resourcesNotFound))
-            return
-        }
-
-        // Execute script with admin privileges via osascript
-        let command = """
-        do shell script "bash '\(scriptPath)' '\(daemonPath)' '\(plistPath)'" with administrator privileges
-        """
-
-        executeAppleScript(command, completion: completion)
-    }
-
-    func uninstall(completion: @escaping (Result<Void, Error>) -> Void) {
-        guard let scriptPath = Bundle.main.path(forResource: "uninstall-daemon", ofType: "sh") else {
-            completion(.failure(InstallError.scriptNotFound))
-            return
-        }
-
-        let command = """
-        do shell script "bash '\(scriptPath)'" with administrator privileges
-        """
-
-        executeAppleScript(command, completion: completion)
-    }
-
-    // MARK: - Private Helpers
-
-    private func getDaemonPath() -> String? {
-        // Daemon binary should be in app bundle Resources
-        return Bundle.main.path(forResource: "FocusDragonDaemon", ofType: nil)
-    }
-
-    private func getPlistPath() -> String? {
-        // Plist should be in app bundle Resources
-        return Bundle.main.path(forResource: "com.focusdragon.daemon", ofType: "plist")
-    }
-
-    private func executeAppleScript(_ script: String, completion: @escaping (Result<Void, Error>) -> Void) {
-        DispatchQueue.global(qos: .userInitiated).async {
-            let task = Process()
-            task.launchPath = "/usr/bin/osascript"
-            task.arguments = ["-e", script]
-
-            let pipe = Pipe()
-            task.standardError = pipe
-
-            do {
-                try task.run()
-                task.waitUntilExit()
-
-                if task.terminationStatus == 0 {
-                    DispatchQueue.main.async {
-                        completion(.success(()))
-                    }
-                } else {
-                    let errorData = pipe.fileHandleForReading.readDataToEndOfFile()
-                    let errorString = String(data: errorData, encoding: .utf8) ?? "Unknown error"
-
-                    DispatchQueue.main.async {
-                        completion(.failure(InstallError.executionFailed(errorString)))
-                    }
-                }
-            } catch {
-                DispatchQueue.main.async {
-                    completion(.failure(error))
-                }
-            }
-        }
-    }
-
-    enum InstallError: LocalizedError {
-        case scriptNotFound
-        case resourcesNotFound
-        case executionFailed(String)
-
-        var errorDescription: String? {
+        var displayName: String {
             switch self {
-            case .scriptNotFound:
-                return "Installation script not found in app bundle"
-            case .resourcesNotFound:
-                return "Daemon resources not found. Please rebuild the app."
-            case .executionFailed(let details):
-                return "Installation failed: \(details)"
+            case .notRegistered: return "Not Installed"
+            case .enabled: return "Running"
+            case .requiresApproval: return "Needs Approval"
+            case .notFound: return "Not Found"
+            case .unknown(let s): return s
             }
+        }
+
+        var isRunning: Bool { self == .enabled }
+    }
+
+    private init() {
+        refreshStatus()
+    }
+
+    // MARK: - Status
+
+    func refreshStatus() {
+        status = mapStatus(daemonService.status)
+    }
+
+    var isDaemonInstalled: Bool {
+        let s = daemonService.status
+        return s == .enabled || s == .requiresApproval
+    }
+
+    var isDaemonRunning: Bool {
+        return daemonService.status == .enabled
+    }
+
+    // MARK: - Registration (no admin password)
+
+    /// Register the daemon. The system will prompt the user via
+    /// System Settings → General → Login Items to approve it.
+    func register() throws {
+        try daemonService.register()
+        refreshStatus()
+    }
+
+    /// Unregister the daemon.
+    func unregister() throws {
+        try daemonService.unregister()
+        refreshStatus()
+    }
+
+    // MARK: - Open System Settings
+
+    /// Opens System Settings → Login Items so the user can approve the daemon.
+    func openLoginItemsSettings() {
+        if let url = URL(string: "x-apple.systempreferences:com.apple.LoginItems-Settings.extension") {
+            NSWorkspace.shared.open(url)
+        }
+    }
+
+    /// Opens System Settings → Privacy & Security → Full Disk Access.
+    func openFullDiskAccessSettings() {
+        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles") {
+            NSWorkspace.shared.open(url)
+        }
+    }
+
+    /// Opens System Settings → Privacy & Security → Accessibility.
+    func openAccessibilitySettings() {
+        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
+            NSWorkspace.shared.open(url)
+        }
+    }
+
+    // MARK: - Helpers
+
+    private func mapStatus(_ s: SMAppService.Status) -> ServiceStatus {
+        switch s {
+        case .notRegistered:
+            return .notRegistered
+        case .enabled:
+            return .enabled
+        case .requiresApproval:
+            return .requiresApproval
+        case .notFound:
+            return .notFound
+        @unknown default:
+            return .unknown("\(s)")
         }
     }
 }

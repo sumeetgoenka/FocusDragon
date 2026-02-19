@@ -101,6 +101,48 @@ class BlockListManager: ObservableObject {
         if let encoded = try? JSONEncoder().encode(stats) {
             userDefaults.set(encoded, forKey: statsKey)
         }
+
+        writeDaemonConfig()
+    }
+
+    /// Public entry point to re-sync config.json without changing any state.
+    /// Call this on app launch so the daemon immediately reflects the saved state.
+    func syncWithDaemon() {
+        writeDaemonConfig()
+    }
+
+    /// Writes the current block state to the shared config file that the daemon reads.
+    private func writeDaemonConfig() {
+        let configPath = "/Library/Application Support/FocusDragon/config.json"
+
+        let enabledDomains = blockedItems
+            .filter { $0.type == .website && $0.isEnabled }
+            .compactMap { $0.domain }
+
+        let enabledApps = blockedItems
+            .filter { $0.type == .application && $0.isEnabled }
+            .compactMap { item -> DaemonConfig.BlockedApp? in
+                guard let bundleId = item.bundleIdentifier, let name = item.appName else { return nil }
+                return DaemonConfig.BlockedApp(bundleIdentifier: bundleId, appName: name)
+            }
+
+        let config = DaemonConfig(
+            isBlocking: isBlocking,
+            lastModified: Date(),
+            blockedDomains: enabledDomains,
+            blockedApps: enabledApps
+        )
+
+        do {
+            let encoder = JSONEncoder()
+            encoder.dateEncodingStrategy = .iso8601
+            encoder.outputFormatting = .prettyPrinted
+            let data = try encoder.encode(config)
+            try data.write(to: URL(fileURLWithPath: configPath), options: .atomic)
+        } catch {
+            // Silently fail if directory isn't writable yet (before daemon setup completes).
+            print("⚠️ writeDaemonConfig failed (run daemon setup to fix): \(error.localizedDescription)")
+        }
     }
 
     private func loadState() {
