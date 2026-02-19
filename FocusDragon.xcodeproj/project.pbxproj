@@ -11,6 +11,16 @@
 		B2DAEM022F45E0000052EEF9 /* FocusDragonDaemon in Copy Daemon Executable */ = {isa = PBXBuildFile; fileRef = B23522F02F45827B0052EEF9 /* FocusDragonDaemon */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		B2DAEM052F45E0000052EEF9 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = B2B4308A2F433013006A41E3 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B23522EF2F45827B0052EEF9;
+			remoteInfo = FocusDragonDaemon;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXCopyFilesBuildPhase section */
 		B23522EE2F45827B0052EEF9 /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
@@ -98,24 +108,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
-
-/* Begin PBXContainerItemProxy section */
-		B2DAEM052F45E0000052EEF9 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = B2B4308A2F433013006A41E3 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = B23522EF2F45827B0052EEF9;
-			remoteInfo = FocusDragonDaemon;
-		};
-/* End PBXContainerItemProxy section */
-
-/* Begin PBXTargetDependency section */
-		B2DAEM062F45E0000052EEF9 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = B23522EF2F45827B0052EEF9 /* FocusDragonDaemon */;
-			targetProxy = B2DAEM052F45E0000052EEF9 /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
 
 /* Begin PBXGroup section */
 		B23523002F4583100052EEF9 /* Resources */ = {
@@ -272,6 +264,14 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		B2DAEM062F45E0000052EEF9 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B23522EF2F45827B0052EEF9 /* FocusDragonDaemon */;
+			targetProxy = B2DAEM052F45E0000052EEF9 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		B23522F52F45827B0052EEF9 /* Debug */ = {

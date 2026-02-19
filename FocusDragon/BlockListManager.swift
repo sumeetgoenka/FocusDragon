@@ -126,11 +126,32 @@ class BlockListManager: ObservableObject {
                 return DaemonConfig.BlockedApp(bundleIdentifier: bundleId, appName: name)
             }
 
+        // Populate lock state for daemon enforcement
+        let lockManager = LockManager.shared
+        let lock = lockManager.currentLock
+        var sharedLockState: SharedLockState?
+        var timerExpiry: Date?
+
+        if lock.isLocked {
+            sharedLockState = SharedLockState(
+                isLocked: true,
+                lockType: lock.type.rawValue,
+                expiresAt: lock.unlockAt,
+                randomText: lock.randomText,
+                requireRestart: lock.type == .restart
+            )
+            if lock.type == .timer {
+                timerExpiry = lock.unlockAt
+            }
+        }
+
         let config = DaemonConfig(
             isBlocking: isBlocking,
             lastModified: Date(),
             blockedDomains: enabledDomains,
-            blockedApps: enabledApps
+            blockedApps: enabledApps,
+            lockState: sharedLockState,
+            timerLockExpiry: timerExpiry
         )
 
         do {

@@ -13,6 +13,7 @@ struct SettingsView: View {
     @State private var showSetup = false
     @State private var uninstallError: String?
     @State private var showUninstallError = false
+    @State private var showPasswordRequired = false
 
     private let installer = DaemonInstaller.shared
 
@@ -24,13 +25,22 @@ struct SettingsView: View {
 
                 if installer.isDaemonInstalled {
                     Button("Unregister Service", role: .destructive) {
-                        showUninstallAlert = true
+                        if SettingsProtection.shared.shouldPreventUninstall() {
+                            showPasswordRequired = true
+                        } else {
+                            showUninstallAlert = true
+                        }
                     }
                 } else {
                     Button("Set Up Permissions") {
                         showSetup = true
                     }
                 }
+            }
+
+            // MARK: - Lock & Protection
+            Section("Lock & Protection") {
+                SettingsProtectionView()
             }
 
             // MARK: - Permissions
@@ -84,6 +94,11 @@ struct SettingsView: View {
             Button("OK") { }
         } message: {
             Text(uninstallError ?? "Unknown error")
+        }
+        .alert("Uninstall Prevented", isPresented: $showPasswordRequired) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text("A lock is active or settings protection is enabled. You must authenticate in Lock & Protection settings before unregistering the service.")
         }
     }
 

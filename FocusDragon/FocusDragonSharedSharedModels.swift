@@ -54,7 +54,20 @@ public struct DaemonConfig: Codable, Equatable, Sendable {
     public var lastModified: Date
     public var blockedDomains: [String]
     public var blockedApps: [BlockedApp]
-    public var lockState: LockState?
+    public var lockState: SharedLockState?
+    public var timerLockExpiry: Date?
+
+    public var isLocked: Bool {
+        guard let lockState = lockState else { return false }
+
+        // Check timer lock
+        if lockState.lockType == "timer",
+           let expiry = timerLockExpiry {
+            return Date() < expiry
+        }
+
+        return lockState.isLocked
+    }
 
     public struct BlockedApp: Codable, Equatable, Sendable {
         public let bundleIdentifier: String
@@ -68,18 +81,20 @@ public struct DaemonConfig: Codable, Equatable, Sendable {
 
     public init(version: String = "1.0", isBlocking: Bool = false,
                 lastModified: Date = Date(), blockedDomains: [String] = [],
-                blockedApps: [BlockedApp] = [], lockState: LockState? = nil) {
+                blockedApps: [BlockedApp] = [], lockState: SharedLockState? = nil,
+                timerLockExpiry: Date? = nil) {
         self.version = version
         self.isBlocking = isBlocking
         self.lastModified = lastModified
         self.blockedDomains = blockedDomains
         self.blockedApps = blockedApps
         self.lockState = lockState
+        self.timerLockExpiry = timerLockExpiry
     }
 }
 
 /// Lock state for tamper-resistant blocking
-public struct LockState: Codable, Equatable, Sendable {
+public struct SharedLockState: Codable, Equatable, Sendable {
     public var isLocked: Bool
     public var lockType: String
     public var expiresAt: Date?

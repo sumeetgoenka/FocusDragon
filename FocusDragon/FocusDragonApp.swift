@@ -16,6 +16,23 @@ struct FocusDragonApp: App {
     init() {
         // Request notification permissions on launch
         NotificationHelper.shared.requestAuthorization()
+
+        // Auto-start tamper detection at the persisted protection level
+        let level = ProtectionLevel.current
+        if level != .none {
+            TamperDetection.shared.startMonitoring(level: level)
+        }
+        TamperDetection.shared.loadStats()
+
+        // Backup daemon plist proactively on launch
+        FileSystemMonitor.shared.backupDaemonPlist()
+
+        // Sync lock state to disk so daemon has latest
+        LockManager.shared.syncLockStateToDisk()
+
+        // Initialize schedule lock controller so schedules fire even
+        // if the user never opens the lock settings UI
+        _ = ScheduleLockController.shared
     }
 
     var body: some Scene {

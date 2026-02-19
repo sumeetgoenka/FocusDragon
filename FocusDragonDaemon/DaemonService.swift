@@ -20,12 +20,14 @@ class DaemonService {
     private var hostsWatcher: HostsWatcher?
     private var processWatcher: ProcessWatcher?
     private var configTimer: Timer?
+    private var restartLockManager: RestartLockManager?
 
     // MARK: - State
 
     private var currentConfig: DaemonConfig?
     private var isRunning = false
     private var lastConfigModTime: Date?
+    private var lastLockStateModTime: Date?
 
     // MARK: - Initialization
 
@@ -49,6 +51,19 @@ class DaemonService {
 
         // Load initial configuration
         loadConfiguration()
+
+        // Initialize restart lock manager
+        restartLockManager = RestartLockManager.shared
+
+        // Record this boot for restart lock tracking
+        restartLockManager?.recordRestart()
+
+        // Check if restart lock is active
+        if restartLockManager?.isActive == true,
+           restartLockManager?.canUnlock == false {
+            log("Restart lock active: \(restartLockManager?.remainingRestarts ?? 0) restarts remaining", level: .info)
+            enforceRestartLock()
+        }
 
         // Start watchers
         startWatchers()
@@ -130,30 +145,49 @@ class DaemonService {
     }
 
     private func checkForConfigChanges() {
-        guard let attrs = try? FileManager.default.attributesOfItem(atPath: configPath),
-              let modTime = attrs[.modificationDate] as? Date else {
-            return
+        // Check config.json
+        if let attrs = try? FileManager.default.attributesOfItem(atPath: configPath),
+           let modTime = attrs[.modificationDate] as? Date {
+
+            if let lastMod = lastConfigModTime, modTime > lastMod {
+                log("Configuration file changed, reloading...", level: .info)
+                loadConfiguration()
+            } else if lastConfigModTime == nil {
+                loadConfiguration()
+            }
         }
 
-        // Check if file has been modified since last load
-        if let lastMod = lastConfigModTime, modTime > lastMod {
-            log("Configuration file changed, reloading...", level: .info)
-            loadConfiguration()
-        } else if lastConfigModTime == nil {
-            // First poll after startup
-            loadConfiguration()
+        // Also check lock_state.json for lock enforcement
+        let lockStatePath = "/Library/Application Support/FocusDragon/lock_state.json"
+        if let attrs = try? FileManager.default.attributesOfItem(atPath: lockStatePath),
+           let modTime = attrs[.modificationDate] as? Date {
+            if lastLockStateModTime == nil || modTime > lastLockStateModTime! {
+                lastLockStateModTime = modTime
+                enforceLockState()
+            }
         }
     }
 
     private func updateWatchers() {
         guard let config = currentConfig else { return }
 
+        // Before applying, enforce lock state: if a lock is active, prevent
+        // the app from setting isBlocking = false.
+        if !config.isBlocking {
+            if isLockedByLockState() {
+                log("Lock active — overriding isBlocking to true", level: .warning)
+                currentConfig?.isBlocking = true
+            }
+        }
+
+        let effectiveConfig = currentConfig ?? config
+
         // Update hosts watcher
-        hostsWatcher?.updateDomains(config.blockedDomains, isBlocking: config.isBlocking)
+        hostsWatcher?.updateDomains(effectiveConfig.blockedDomains, isBlocking: effectiveConfig.isBlocking)
 
         // Update process watcher
-        let bundleIDs = config.blockedApps.map { $0.bundleIdentifier }
-        processWatcher?.updateApps(bundleIDs, isBlocking: config.isBlocking)
+        let bundleIDs = effectiveConfig.blockedApps.map { $0.bundleIdentifier }
+        processWatcher?.updateApps(bundleIDs, isBlocking: effectiveConfig.isBlocking)
 
         log("Watchers updated with new configuration", level: .info)
     }
@@ -190,6 +224,62 @@ class DaemonService {
         hostsWatcher = nil
         processWatcher = nil
         log("Watchers stopped", level: .info)
+    }
+
+    // MARK: - Lock Enforcement
+
+    /// Read lock_state.json and enforce blocking if a lock is active.
+    private func enforceLockState() {
+        if isLockedByLockState() {
+            if currentConfig?.isBlocking == false {
+                currentConfig?.isBlocking = true
+                updateWatchers()
+                log("Lock state enforced: blocking re-enabled", level: .info)
+            }
+        }
+    }
+
+    /// Returns true if lock_state.json indicates an active lock.
+    private func isLockedByLockState() -> Bool {
+        // Check restart lock first
+        if restartLockManager?.isActive == true,
+           restartLockManager?.canUnlock == false {
+            return true
+        }
+
+        // Check lock_state.json
+        let lockStatePath = "/Library/Application Support/FocusDragon/lock_state.json"
+        guard let data = try? Data(contentsOf: URL(fileURLWithPath: lockStatePath)) else {
+            return false
+        }
+
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        guard let lockState = try? decoder.decode(DaemonLockState.self, from: data) else {
+            return false
+        }
+
+        // Not locked
+        if !lockState.isLocked { return false }
+
+        // Timer lock: check expiry
+        if lockState.lockType == "timer" {
+            if let expiry = lockState.expiresAt {
+                return Date() < expiry
+            }
+            return false
+        }
+
+        // All other lock types: if isLocked, enforce
+        return true
+    }
+
+    private func enforceRestartLock() {
+        // Ensure blocking remains active
+        if currentConfig?.isBlocking == false {
+            currentConfig?.isBlocking = true
+            log("Restart lock: forced blocking on", level: .info)
+        }
     }
 
     // MARK: - Utilities
@@ -252,4 +342,13 @@ class DaemonService {
         case warning = "WARN"
         case error = "ERROR"
     }
+}
+
+// MARK: - Daemon Lock State (lightweight struct for reading app-side lock state)
+
+private struct DaemonLockState: Codable {
+    var lockType: String
+    var isLocked: Bool
+    var expiresAt: Date?
+    var breakDelay: TimeInterval?
 }
