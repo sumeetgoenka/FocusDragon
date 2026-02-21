@@ -19,14 +19,13 @@ struct RestartLockView: View {
         VStack(spacing: 20) {
             Image(systemName: "arrow.clockwise.circle.fill")
                 .font(.system(size: 60))
-                .foregroundColor(.orange)
+                .foregroundColor(AppTheme.flame)
 
             Text("Restart Lock")
-                .font(.title2)
-                .fontWeight(.semibold)
+                .font(AppTheme.headerFont(18))
 
             Text("Require system restarts before unlocking")
-                .font(.subheadline)
+                .font(AppTheme.bodyFont(12))
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
 
@@ -35,14 +34,14 @@ struct RestartLockView: View {
                 Label("Survives app termination", systemImage: "checkmark.circle")
                 Label("Enforced by daemon", systemImage: "checkmark.circle")
             }
-            .font(.subheadline)
+            .font(AppTheme.bodyFont(12))
             .foregroundColor(.secondary)
 
             Divider()
 
             VStack(spacing: 15) {
                 Text("Number of Restarts Required")
-                    .font(.subheadline)
+                    .font(AppTheme.bodyFont(12))
                     .foregroundColor(.secondary)
 
                 Picker("Restarts", selection: $selectedCount) {
@@ -53,19 +52,18 @@ struct RestartLockView: View {
                 .pickerStyle(.segmented)
 
                 Text(warningText)
-                    .font(.caption)
-                    .foregroundColor(.orange)
+                    .font(AppTheme.bodyFont(11))
+                    .foregroundColor(AppTheme.flame)
                     .multilineTextAlignment(.center)
                     .padding()
-                    .background(Color.orange.opacity(0.1))
+                    .background(AppTheme.flame.opacity(0.1))
                     .cornerRadius(8)
             }
 
             Button("Activate Restart Lock") {
                 manager.activate(requiredRestarts: selectedCount)
             }
-            .buttonStyle(.borderedProminent)
-            .tint(.orange)
+            .buttonStyle(PrimaryGlowButtonStyle(accent: AppTheme.flame))
         }
     }
 
@@ -73,27 +71,26 @@ struct RestartLockView: View {
         VStack(spacing: 25) {
             ZStack {
                 Circle()
-                    .fill(Color.orange.opacity(0.1))
+                    .fill(AppTheme.flame.opacity(0.1))
                     .frame(width: 120, height: 120)
 
                 VStack {
                     Image(systemName: "arrow.clockwise")
                         .font(.system(size: 40))
-                        .foregroundColor(.orange)
+                        .foregroundColor(AppTheme.flame)
 
                     Text("\(manager.remainingRestarts)")
-                        .font(.system(size: 32, weight: .bold))
-                        .foregroundColor(.orange)
+                        .font(AppTheme.titleFont(28))
+                        .foregroundColor(AppTheme.flame)
                 }
             }
 
             Text("Restart Lock Active")
-                .font(.title3)
-                .fontWeight(.semibold)
+                .font(AppTheme.headerFont(16))
 
             VStack(spacing: 10) {
                 Text("Restarts Remaining:")
-                    .font(.subheadline)
+                    .font(AppTheme.bodyFont(12))
                     .foregroundColor(.secondary)
 
                 HStack(spacing: 10) {
@@ -114,10 +111,10 @@ struct RestartLockView: View {
 
             VStack(spacing: 5) {
                 Text("Instructions:")
-                    .font(.headline)
+                    .font(AppTheme.headerFont(14))
 
                 Text("Restart your system \(manager.remainingRestarts) more time(s) to unlock")
-                    .font(.subheadline)
+                    .font(AppTheme.bodyFont(12))
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
             }
@@ -127,7 +124,7 @@ struct RestartLockView: View {
 
             if let uptime = BootDetector.shared.getUptime() {
                 Text("System uptime: \(formatUptime(uptime))")
-                    .font(.caption)
+                    .font(AppTheme.bodyFont(11))
                     .foregroundColor(.secondary)
             }
 
@@ -138,7 +135,7 @@ struct RestartLockView: View {
     private var restartInstructions: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("How to Restart:")
-                .font(.headline)
+                .font(AppTheme.headerFont(14))
 
             VStack(alignment: .leading, spacing: 5) {
                 Label("Apple menu → Restart", systemImage: "1.circle.fill")
@@ -146,7 +143,7 @@ struct RestartLockView: View {
                 Label("Wait for system to boot", systemImage: "3.circle.fill")
                 Label("Counter will decrement", systemImage: "4.circle.fill")
             }
-            .font(.caption)
+            .font(AppTheme.bodyFont(11))
             .foregroundColor(.secondary)
         }
         .padding()

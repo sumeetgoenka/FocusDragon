@@ -7,11 +7,19 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B25AAE862F48560800B90236 /* FocusDragonSafariExtension Extension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B25AAE852F48560800B90236 /* FocusDragonSafariExtension Extension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		B2DAEM012F45E0000052EEF9 /* com.focusdragon.daemon.plist in Copy LaunchDaemon Plist */ = {isa = PBXBuildFile; fileRef = B23522FF2F4583100052EEF9 /* com.focusdragon.daemon.plist */; };
 		B2DAEM022F45E0000052EEF9 /* FocusDragonDaemon in Copy Daemon Executable */ = {isa = PBXBuildFile; fileRef = B23522F02F45827B0052EEF9 /* FocusDragonDaemon */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		B25AAE872F48560800B90236 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = B2B4308A2F433013006A41E3 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B25AAE842F48560800B90236;
+			remoteInfo = "FocusDragonSafariExtension Extension";
+		};
 		B2DAEM052F45E0000052EEF9 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = B2B4308A2F433013006A41E3 /* Project object */;
@@ -30,6 +38,17 @@
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 1;
+		};
+		B25AAEA22F48560800B90236 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				B25AAE862F48560800B90236 /* FocusDragonSafariExtension Extension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
 		};
 		B2DAEM032F45E0000052EEF9 /* Copy LaunchDaemon Plist */ = {
 			isa = PBXCopyFilesBuildPhase;
@@ -63,6 +82,8 @@
 		B23523032F4583100052EEF9 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		B23523042F4583100052EEF9 /* ProcessWatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcessWatcher.swift; sourceTree = "<group>"; };
 		B23525062F45D5B20052EEF9 /* daemon-binary */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = "daemon-binary"; sourceTree = "<group>"; };
+		B25AAE6C2F48560500B90236 /* FocusDragonSafariExtension.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FocusDragonSafariExtension.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B25AAE852F48560800B90236 /* FocusDragonSafariExtension Extension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "FocusDragonSafariExtension Extension.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
 		B2B430922F433013006A41E3 /* FocusDragon.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FocusDragon.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -74,12 +95,36 @@
 			);
 			target = B23522EF2F45827B0052EEF9 /* FocusDragonDaemon */;
 		};
+		B25AAE9E2F48560800B90236 /* Exceptions for "FocusDragonSafariExtension Extension" folder in "FocusDragonSafariExtension Extension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = B25AAE842F48560800B90236 /* FocusDragonSafariExtension Extension */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		B23522F12F45827B0052EEF9 /* FocusDragonDaemon */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = FocusDragonDaemon;
+			sourceTree = "<group>";
+		};
+		B25AAE6D2F48560500B90236 /* FocusDragonSafariExtension */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = FocusDragonSafariExtension;
+			sourceTree = "<group>";
+		};
+		B25AAE892F48560800B90236 /* FocusDragonSafariExtension Extension */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				B25AAE9E2F48560800B90236 /* Exceptions for "FocusDragonSafariExtension Extension" folder in "FocusDragonSafariExtension Extension" target */,
+			);
+			explicitFolders = (
+				Resources/_locales,
+				Resources/images,
+			);
+			path = "FocusDragonSafariExtension Extension";
 			sourceTree = "<group>";
 		};
 		B2B430942F433013006A41E3 /* FocusDragon */ = {
@@ -94,6 +139,20 @@
 
 /* Begin PBXFrameworksBuildPhase section */
 		B23522ED2F45827B0052EEF9 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B25AAE692F48560500B90236 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B25AAE822F48560800B90236 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -137,6 +196,8 @@
 				B23523052F4583100052EEF9 /* FocusDragonDaemon */,
 				B2B430942F433013006A41E3 /* FocusDragon */,
 				B23522F12F45827B0052EEF9 /* FocusDragonDaemon */,
+				B25AAE6D2F48560500B90236 /* FocusDragonSafariExtension */,
+				B25AAE892F48560800B90236 /* FocusDragonSafariExtension Extension */,
 				B2B430932F433013006A41E3 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -146,6 +207,8 @@
 			children = (
 				B2B430922F433013006A41E3 /* FocusDragon.app */,
 				B23522F02F45827B0052EEF9 /* FocusDragonDaemon */,
+				B25AAE6C2F48560500B90236 /* FocusDragonSafariExtension.app */,
+				B25AAE852F48560800B90236 /* FocusDragonSafariExtension Extension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -174,6 +237,52 @@
 			productName = FocusDragonDaemon;
 			productReference = B23522F02F45827B0052EEF9 /* FocusDragonDaemon */;
 			productType = "com.apple.product-type.tool";
+		};
+		B25AAE6B2F48560500B90236 /* FocusDragonSafariExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B25AAEA32F48560800B90236 /* Build configuration list for PBXNativeTarget "FocusDragonSafariExtension" */;
+			buildPhases = (
+				B25AAE682F48560500B90236 /* Sources */,
+				B25AAE692F48560500B90236 /* Frameworks */,
+				B25AAE6A2F48560500B90236 /* Resources */,
+				B25AAEA22F48560800B90236 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				B25AAE882F48560800B90236 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				B25AAE6D2F48560500B90236 /* FocusDragonSafariExtension */,
+			);
+			name = FocusDragonSafariExtension;
+			packageProductDependencies = (
+			);
+			productName = FocusDragonSafariExtension;
+			productReference = B25AAE6C2F48560500B90236 /* FocusDragonSafariExtension.app */;
+			productType = "com.apple.product-type.application";
+		};
+		B25AAE842F48560800B90236 /* FocusDragonSafariExtension Extension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B25AAE9F2F48560800B90236 /* Build configuration list for PBXNativeTarget "FocusDragonSafariExtension Extension" */;
+			buildPhases = (
+				B25AAE812F48560800B90236 /* Sources */,
+				B25AAE822F48560800B90236 /* Frameworks */,
+				B25AAE832F48560800B90236 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				B25AAE892F48560800B90236 /* FocusDragonSafariExtension Extension */,
+			);
+			name = "FocusDragonSafariExtension Extension";
+			packageProductDependencies = (
+			);
+			productName = "FocusDragonSafariExtension Extension";
+			productReference = B25AAE852F48560800B90236 /* FocusDragonSafariExtension Extension.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 		B2B430912F433013006A41E3 /* FocusDragon */ = {
 			isa = PBXNativeTarget;
@@ -213,6 +322,12 @@
 					B23522EF2F45827B0052EEF9 = {
 						CreatedOnToolsVersion = 26.2;
 					};
+					B25AAE6B2F48560500B90236 = {
+						CreatedOnToolsVersion = 26.2;
+					};
+					B25AAE842F48560800B90236 = {
+						CreatedOnToolsVersion = 26.2;
+					};
 					B2B430912F433013006A41E3 = {
 						CreatedOnToolsVersion = 26.2;
 					};
@@ -234,11 +349,27 @@
 			targets = (
 				B2B430912F433013006A41E3 /* FocusDragon */,
 				B23522EF2F45827B0052EEF9 /* FocusDragonDaemon */,
+				B25AAE6B2F48560500B90236 /* FocusDragonSafariExtension */,
+				B25AAE842F48560800B90236 /* FocusDragonSafariExtension Extension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		B25AAE6A2F48560500B90236 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B25AAE832F48560800B90236 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		B2B430902F433013006A41E3 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -256,6 +387,20 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		B25AAE682F48560500B90236 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B25AAE812F48560800B90236 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		B2B4308E2F433013006A41E3 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -266,6 +411,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		B25AAE882F48560800B90236 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B25AAE842F48560800B90236 /* FocusDragonSafariExtension Extension */;
+			targetProxy = B25AAE872F48560800B90236 /* PBXContainerItemProxy */;
+		};
 		B2DAEM062F45E0000052EEF9 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = B23522EF2F45827B0052EEF9 /* FocusDragonDaemon */;
@@ -294,11 +444,171 @@
 			buildSettings = {
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Manual;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=macosx*]" = 9STH9GD9MP;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GCC_OPTIMIZATION_LEVEL = s;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
+				STRIP_INSTALLED_PRODUCT = YES;
+				STRIP_SWIFT_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		B25AAEA02F48560800B90236 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = "FocusDragonSafariExtension Extension/FocusDragonSafariExtension Extension.entitlements";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 9STH9GD9MP;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "FocusDragonSafariExtension Extension/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "FocusDragonSafariExtension Extension";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"-framework",
+					SafariServices,
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.anaygoenka.FocusDragon.FocusDragonSafariExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		B25AAEA12F48560800B90236 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = "FocusDragonSafariExtension Extension/FocusDragonSafariExtension Extension.entitlements";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 9STH9GD9MP;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "FocusDragonSafariExtension Extension/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "FocusDragonSafariExtension Extension";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.14;
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"-framework",
+					SafariServices,
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.anaygoenka.FocusDragon.FocusDragonSafariExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		B25AAEA42F48560800B90236 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = FocusDragonSafariExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"-framework",
+					SafariServices,
+					"-framework",
+					WebKit,
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = Anay.FocusDragonSafariExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		B25AAEA52F48560800B90236 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = FocusDragonSafariExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"-framework",
+					SafariServices,
+					"-framework",
+					WebKit,
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = Anay.FocusDragonSafariExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 			};
@@ -427,12 +737,12 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = FocusDragon/FocusDragon.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Manual;
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
-				"DEVELOPMENT_TEAM[sdk=macosx*]" = 9STH9GD9MP;
+				DEVELOPMENT_TEAM = 9STH9GD9MP;
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -442,7 +752,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = Anay.FocusDragon;
+				PRODUCT_BUNDLE_IDENTIFIER = com.anaygoenka.FocusDragon;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				REGISTER_APP_GROUPS = YES;
@@ -458,16 +768,20 @@
 		B2B4309F2F433016006A41E3 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD)";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = FocusDragon/FocusDragon.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Manual;
+				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
-				"DEVELOPMENT_TEAM[sdk=macosx*]" = 9STH9GD9MP;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = 9STH9GD9MP;
 				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
+				GCC_OPTIMIZATION_LEVEL = s;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -475,14 +789,18 @@
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = Anay.FocusDragon;
+				OTHER_SWIFT_FLAGS = "-enforce-exclusivity=checked";
+				PRODUCT_BUNDLE_IDENTIFIER = com.anaygoenka.FocusDragon;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				STRIP_INSTALLED_PRODUCT = YES;
+				STRIP_SWIFT_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 			};
@@ -496,6 +814,24 @@
 			buildConfigurations = (
 				B23522F52F45827B0052EEF9 /* Debug */,
 				B23522F62F45827B0052EEF9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B25AAE9F2F48560800B90236 /* Build configuration list for PBXNativeTarget "FocusDragonSafariExtension Extension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B25AAEA02F48560800B90236 /* Debug */,
+				B25AAEA12F48560800B90236 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B25AAEA32F48560800B90236 /* Build configuration list for PBXNativeTarget "FocusDragonSafariExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B25AAEA42F48560800B90236 /* Debug */,
+				B25AAEA52F48560800B90236 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

@@ -45,14 +45,13 @@ struct SettingsProtectionView: View {
         VStack(spacing: 5) {
             Image(systemName: "lock.shield")
                 .font(.system(size: 40))
-                .foregroundColor(.blue)
+                .foregroundColor(AppTheme.accent)
 
             Text("Settings Protection")
-                .font(.title2)
-                .fontWeight(.semibold)
+                .font(AppTheme.headerFont(18))
 
             Text("Password-protect your FocusDragon settings")
-                .font(.subheadline)
+                .font(AppTheme.bodyFont(12))
                 .foregroundColor(.secondary)
         }
     }
@@ -62,7 +61,7 @@ struct SettingsProtectionView: View {
     private var setupView: some View {
         VStack(spacing: 15) {
             Text("Set a password to prevent unauthorized changes to your blocking settings.")
-                .font(.subheadline)
+                .font(AppTheme.bodyFont(12))
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
 
@@ -75,7 +74,7 @@ struct SettingsProtectionView: View {
             Button("Set Password") {
                 setNewPassword()
             }
-            .buttonStyle(.borderedProminent)
+            .buttonStyle(PrimaryGlowButtonStyle())
             .disabled(password.isEmpty || confirmPassword.isEmpty)
         }
         .frame(maxWidth: 300)
@@ -90,10 +89,10 @@ struct SettingsProtectionView: View {
                 .foregroundColor(.orange)
 
             Text("Settings are locked")
-                .font(.headline)
+                .font(AppTheme.headerFont(16))
 
             Text("Enter your password to access settings.")
-                .font(.subheadline)
+                .font(AppTheme.bodyFont(12))
                 .foregroundColor(.secondary)
 
             SecureField("Password", text: $password)
@@ -103,7 +102,7 @@ struct SettingsProtectionView: View {
             Button("Unlock") {
                 authenticate()
             }
-            .buttonStyle(.borderedProminent)
+            .buttonStyle(PrimaryGlowButtonStyle())
             .disabled(password.isEmpty)
         }
         .frame(maxWidth: 300)
@@ -117,12 +116,12 @@ struct SettingsProtectionView: View {
                 Image(systemName: "checkmark.shield.fill")
                     .foregroundColor(.green)
                 Text("Settings Protected")
-                    .font(.headline)
+                    .font(AppTheme.headerFont(16))
                     .foregroundColor(.green)
             }
 
             Text("Your settings are password-protected.")
-                .font(.subheadline)
+                .font(AppTheme.bodyFont(12))
                 .foregroundColor(.secondary)
 
             Divider()
@@ -132,12 +131,12 @@ struct SettingsProtectionView: View {
                     protection.lockSettings()
                     password = ""
                 }
-                .buttonStyle(.bordered)
+                .buttonStyle(SecondaryButtonStyle())
 
                 Button("Remove Password") {
                     showingRemoveConfirm = true
                 }
-                .buttonStyle(.bordered)
+                .buttonStyle(SecondaryButtonStyle())
                 .foregroundColor(.red)
             }
 
@@ -146,7 +145,7 @@ struct SettingsProtectionView: View {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .foregroundColor(.orange)
                     Text("Uninstall blocked while a lock is active")
-                        .font(.caption)
+                        .font(AppTheme.bodyFont(11))
                         .foregroundColor(.secondary)
                 }
                 .padding(.top, 5)

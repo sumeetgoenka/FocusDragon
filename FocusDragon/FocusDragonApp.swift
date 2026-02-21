@@ -12,6 +12,9 @@ import AppKit
 @main
 struct FocusDragonApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    @StateObject private var manager = BlockListManager()
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
+    @AppStorage("menuBarMode") private var menuBarMode = false
 
     init() {
         // Request notification permissions on launch
@@ -33,43 +36,49 @@ struct FocusDragonApp: App {
         // Initialize schedule lock controller so schedules fire even
         // if the user never opens the lock settings UI
         _ = ScheduleLockController.shared
+
+        // Start monitoring browser extension health
+        ExtensionMonitor.shared.startMonitoring()
     }
 
     var body: some Scene {
         WindowGroup {
-            MainView()
+            MainView(manager: manager)
+                .accentColor(AppTheme.accent)
+                .onAppear {
+                    appDelegate.blockListManager = manager
+                    if menuBarMode {
+                        appDelegate.menuBarController.install(manager: manager)
+                    }
+                }
+                .onChange(of: menuBarMode) { _, newValue in
+                    if newValue {
+                        appDelegate.menuBarController.install(manager: manager)
+                    } else {
+                        appDelegate.menuBarController.uninstall()
+                    }
+                }
+                .sheet(isPresented: Binding(
+                    get: { !hasCompletedOnboarding },
+                    set: { _ in }
+                )) {
+                    OnboardingView(manager: manager)
+                        .accentColor(AppTheme.accent)
+                }
         }
-        .windowStyle(.hiddenTitleBar)
         .windowResizability(.contentSize)
         .commands {
             CommandGroup(replacing: .newItem) { }
         }
 
         Settings {
-            SettingsView()
+            SettingsView(manager: manager)
+                .accentColor(AppTheme.accent)
         }
     }
 }
 
 class AppDelegate: NSObject, NSApplicationDelegate {
-    var statusItem: NSStatusItem?
-
-    func applicationDidFinishLaunching(_ notification: Notification) {
-        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-
-        if let button = statusItem?.button {
-            button.image = NSImage(systemSymbolName: "shield", accessibilityDescription: "FocusDragon")
-        }
-
-        let menu = NSMenu()
-        menu.addItem(NSMenuItem(title: "Open FocusDragon", action: #selector(openMain), keyEquivalent: ""))
-        menu.addItem(NSMenuItem.separator())
-        menu.addItem(NSMenuItem(title: "Quit", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
-
-        statusItem?.menu = menu
-    }
-
-    @objc func openMain() {
-        NSApp.activate(ignoringOtherApps: true)
-    }
+    let menuBarController = MenuBarController()
+    var blockListManager: BlockListManager?
 }

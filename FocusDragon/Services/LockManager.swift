@@ -110,6 +110,26 @@ class LockManager: ObservableObject {
         notifyDaemon()
     }
 
+    func createFrozenLock(duration: TimeInterval, mode: FrozenMode, allowedApps: [String]) throws {
+        guard duration >= configuration.minTimerDuration,
+              duration <= configuration.maxTimerDuration else {
+            throw LockError.invalidDuration
+        }
+
+        let startTime = Date()
+        var lock = LockState(type: .frozen)
+        lock.timerDuration = duration
+        lock.remainingTime = duration
+        lock.unlockAt = startTime.addingTimeInterval(duration)
+        lock.frozenMode = mode
+        lock.frozenAllowedApps = allowedApps
+        lock.lock()
+
+        currentLock = lock
+        TimerPersistence.shared.save(startTime: startTime, duration: duration)
+        notifyDaemon()
+    }
+
     // MARK: - Lock Verification
 
     func attemptUnlock(with text: String? = nil) -> UnlockResult {
@@ -182,6 +202,15 @@ class LockManager: ObservableObject {
                 breakController.startCountdown()
                 return .failure(.breakableCountingDown(remaining: breakController.totalDelay))
             }
+
+        case .frozen:
+            if currentLock.canUnlock {
+                currentLock.unlock()
+                TimerPersistence.shared.clear()
+                result = .success
+            } else {
+                return .failure(.timerNotExpired(remaining: currentLock.remainingTime ?? 0))
+            }
         }
 
         // Sync unlocked state to disk so daemon stops overriding isBlocking
@@ -223,7 +252,7 @@ class LockManager: ObservableObject {
     }
 
     private func updateTimerLock() {
-        guard currentLock.type == .timer,
+        guard (currentLock.type == .timer || currentLock.type == .frozen),
               currentLock.isLocked,
               let unlockAt = currentLock.unlockAt else {
             return
@@ -297,7 +326,7 @@ class LockManager: ObservableObject {
 
         // If timer lock was active, try recovering remaining time from
         // the daemon-readable file (survives system restarts)
-        if currentLock.type == .timer, currentLock.isLocked {
+        if (currentLock.type == .timer || currentLock.type == .frozen), currentLock.isLocked {
             if let remaining = TimerPersistence.shared.getRemainingTime() {
                 currentLock.remainingTime = remaining
                 currentLock.unlockAt = Date().addingTimeInterval(remaining)

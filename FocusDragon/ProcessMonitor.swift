@@ -14,6 +14,8 @@ class ProcessMonitor: ObservableObject {
 
     private var timer: Timer?
     private var blockedBundleIDs: Set<String> = []
+    private var appExceptions: [AppException] = []
+    private var whitelistOnlyApps: Set<String> = []
     @Published var isMonitoring = false
     @Published var terminationCount = 0
 
@@ -28,7 +30,9 @@ class ProcessMonitor: ObservableObject {
 
     private init() {}
 
-    func startMonitoring(blockedApps: [BlockItem]) {
+    func startMonitoring(blockedApps: [BlockItem],
+                         appExceptions: [AppException] = [],
+                         whitelistOnlyApps: [String] = []) {
         stopMonitoring()
 
         // Extract bundle IDs
@@ -38,23 +42,20 @@ class ProcessMonitor: ObservableObject {
 
         // Remove any system protected apps
         blockedBundleIDs.subtract(systemProtectedApps)
+        self.appExceptions = appExceptions
+        self.whitelistOnlyApps = Set(whitelistOnlyApps)
+
+        if !whitelistOnlyApps.isEmpty {
+            isMonitoring = true
+            startTimer()
+            print("ProcessMonitor: Started monitoring whitelist-only mode (\(whitelistOnlyApps.count) apps)")
+            return
+        }
 
         guard !blockedBundleIDs.isEmpty else { return }
 
         isMonitoring = true
-
-        // Start timer
-        timer = Timer.scheduledTimer(
-            withTimeInterval: 1.5,
-            repeats: true
-        ) { [weak self] _ in
-            self?.checkRunningProcesses()
-        }
-
-        // Add to run loop to ensure it fires
-        if let timer = timer {
-            RunLoop.main.add(timer, forMode: .common)
-        }
+        startTimer()
 
         print("ProcessMonitor: Started monitoring \(blockedBundleIDs.count) apps")
     }
@@ -64,18 +65,61 @@ class ProcessMonitor: ObservableObject {
         timer = nil
         isMonitoring = false
         blockedBundleIDs.removeAll()
+        appExceptions = []
+        whitelistOnlyApps = []
         print("ProcessMonitor: Stopped monitoring")
     }
 
     private func checkRunningProcesses() {
         let runningApps = NSWorkspace.shared.runningApplications
 
+        if !whitelistOnlyApps.isEmpty {
+            enforceWhitelistOnly(runningApps: runningApps)
+            return
+        }
+
+        let now = Date()
+        let allowedExceptions = Set(appExceptions.filter { $0.isActive(on: now) }.map { $0.bundleIdentifier })
+
         for app in runningApps {
             guard let bundleId = app.bundleIdentifier else { continue }
 
-            if blockedBundleIDs.contains(bundleId) {
+            if blockedBundleIDs.contains(bundleId), !allowedExceptions.contains(bundleId) {
                 terminateApplication(app)
             }
+        }
+    }
+
+    private func enforceWhitelistOnly(runningApps: [NSRunningApplication]) {
+        let allowed = whitelistOnlyApps.union(systemProtectedApps).union([SharedConstants.appBundleIdentifier])
+
+        for app in runningApps {
+            guard let bundleId = app.bundleIdentifier else { continue }
+            if allowed.contains(bundleId) { continue }
+            if !isUserFacingApp(app) { continue }
+            terminateApplication(app)
+        }
+    }
+
+    private func isUserFacingApp(_ app: NSRunningApplication) -> Bool {
+        guard let bundleURL = app.bundleURL else { return false }
+        let path = bundleURL.path
+        if path.hasPrefix("/Applications/") || path.hasPrefix("/Users/") {
+            return true
+        }
+        return false
+    }
+
+    private func startTimer() {
+        timer = Timer.scheduledTimer(
+            withTimeInterval: 1.5,
+            repeats: true
+        ) { [weak self] _ in
+            self?.checkRunningProcesses()
+        }
+
+        if let timer = timer {
+            RunLoop.main.add(timer, forMode: .common)
         }
     }
 
@@ -103,10 +147,14 @@ class ProcessMonitor: ObservableObject {
         NotificationHelper.shared.showBlockedAppNotification(appName: appName)
     }
 
-    func updateBlockedApps(_ apps: [BlockItem]) {
+    func updateBlockedApps(_ apps: [BlockItem],
+                           appExceptions: [AppException] = [],
+                           whitelistOnlyApps: [String] = []) {
         if isMonitoring {
             // Restart with new list
-            startMonitoring(blockedApps: apps)
+            startMonitoring(blockedApps: apps,
+                            appExceptions: appExceptions,
+                            whitelistOnlyApps: whitelistOnlyApps)
         }
     }
 }

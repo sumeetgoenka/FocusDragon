@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>FocusDragon</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <img src="../icons/icon48.png" alt="FocusDragon" />
+        <h1>FocusDragon</h1>
+      </div>
+
+      <div id="incognito-warning" class="warning" style="display: none">
+        ⚠️ Private window access not enabled.
+        <a href="#" id="fix-incognito">Fix this</a>
+      </div>
+
+      <div class="status">
+        <div id="status-indicator" class="indicator"></div>
+        <span id="status-text">Checking status...</span>
+      </div>
+
+      <div id="blocked-list" class="blocked-list"></div>
+
+      <div class="footer">
+        <p>Managed by FocusDragon app</p>
+        <button id="open-app">Open App</button>
+      </div>
+    </div>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

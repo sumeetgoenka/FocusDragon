@@ -1,0 +1,61 @@
+# Xcode
+DerivedData/
+build/
+*.xcworkspace/xcuserdata/
+*.xcworkspace/xcshareddata/WorkspaceSettings.xcsettings
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+
+# SwiftPM
+.swiftpm/
+Packages/
+.package.resolved
+
+# CocoaPods
+Pods/
+
+# Carthage
+Carthage/Build/
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/
+fastlane/test_output/
+
+# Archives
+*.xcarchive
+
+# User-specific
+*.xccheckout
+*.moved-aside
+*.xcuserstate
+*.swp
+*.swo
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+.Spotlight-V100
+.Trashes
+
+# Swift coverage and logs
+*.profdata
+*.gcno
+*.gcda
+*.log
+
+# Playground
+timeline.xctimeline
+playground.xcworkspace
+
+# SPM build artifacts
+.build/
+
+# Temporary
+*.tmp
+*.temp
+~$*

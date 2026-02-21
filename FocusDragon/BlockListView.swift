@@ -10,19 +10,39 @@ import AppKit
 
 struct BlockListView: View {
     @ObservedObject var manager: BlockListManager
+    @Environment(\.colorScheme) private var scheme
     @State private var selectedTab = 0
     @State private var newDomain = ""
     @State private var showingAppPicker = false
+    @State private var showingPresets = false
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Tab selector
-            Picker("Type", selection: $selectedTab) {
-                Text("Websites").tag(0)
-                Text("Applications").tag(1)
+        VStack(spacing: 16) {
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Block List")
+                        .font(AppTheme.headerFont(16))
+                    Text("Websites and apps to lock down during a focus session.")
+                        .font(AppTheme.bodyFont(12))
+                        .foregroundColor(.secondary)
+                }
+
+                Spacer()
+
+                Picker("Type", selection: $selectedTab) {
+                    Text("Websites").tag(0)
+                    Text("Applications").tag(1)
+                }
+                .pickerStyle(.segmented)
+                .frame(width: 220)
+
+                Button {
+                    showingPresets = true
+                } label: {
+                    Label("Presets", systemImage: "sparkles")
+                }
+                .buttonStyle(SecondaryButtonStyle())
             }
-            .pickerStyle(.segmented)
-            .padding()
 
             if selectedTab == 0 {
                 websitesView
@@ -30,11 +50,13 @@ struct BlockListView: View {
                 applicationsView
             }
         }
+        .sheet(isPresented: $showingPresets) {
+            PresetsView(manager: manager)
+        }
     }
 
     private var websitesView: some View {
-        VStack {
-            // Add website input
+        VStack(spacing: 12) {
             HStack {
                 TextField("Enter domain (e.g., youtube.com)", text: $newDomain)
                     .textFieldStyle(.roundedBorder)
@@ -44,67 +66,68 @@ struct BlockListView: View {
                     manager.addDomain(newDomain)
                     newDomain = ""
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(PrimaryGlowButtonStyle())
             }
-            .padding(.horizontal)
 
-            // Websites list
             List {
                 ForEach(manager.getWebsites()) { item in
                     HStack {
                         Image(systemName: "globe")
-                            .foregroundColor(.blue)
+                            .foregroundColor(AppTheme.electricBlue)
                         Text(item.displayName)
                         Spacer()
                         Toggle("", isOn: binding(for: item))
+                            .labelsHidden()
                     }
+                    .padding(.vertical, 6)
+                    .listRowBackground(Color.clear)
                 }
                 .onDelete { offsets in
                     deleteItems(at: offsets, from: manager.getWebsites())
                 }
             }
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
         }
     }
 
     private var applicationsView: some View {
-        VStack {
-            // Add application button
+        VStack(spacing: 12) {
             HStack {
                 Button(action: selectApplication) {
                     Label("Add Application", systemImage: "plus.app")
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(PrimaryGlowButtonStyle())
 
                 Spacer()
 
                 Button(action: showAppBrowser) {
                     Label("Browse Apps", systemImage: "list.bullet")
                 }
+                .buttonStyle(SecondaryButtonStyle())
             }
-            .padding(.horizontal)
 
-            // Applications list
             List {
                 ForEach(manager.getApplications()) { item in
                     HStack {
-                        // App icon
                         if let iconPath = item.appIconPath,
                            let image = NSImage(contentsOfFile: iconPath) {
                             Image(nsImage: image)
                                 .resizable()
-                                .frame(width: 32, height: 32)
+                                .frame(width: 28, height: 28)
+                                .cornerRadius(6)
                         } else {
                             Image(systemName: "app")
-                                .frame(width: 32, height: 32)
+                                .frame(width: 28, height: 28)
                                 .foregroundColor(.gray)
                         }
 
-                        VStack(alignment: .leading) {
+                        VStack(alignment: .leading, spacing: 2) {
                             Text(item.displayName)
-                                .font(.body)
+                                .font(AppTheme.bodyFont(13))
                             if let bundleId = item.bundleIdentifier {
                                 Text(bundleId)
-                                    .font(.caption)
+                                    .font(AppTheme.bodyFont(11))
                                     .foregroundColor(.secondary)
                             }
                         }
@@ -112,13 +135,17 @@ struct BlockListView: View {
                         Spacer()
 
                         Toggle("", isOn: binding(for: item))
+                            .labelsHidden()
                     }
-                    .padding(.vertical, 4)
+                    .padding(.vertical, 6)
+                    .listRowBackground(Color.clear)
                 }
                 .onDelete { offsets in
                     deleteItems(at: offsets, from: manager.getApplications())
                 }
             }
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
         }
         .sheet(isPresented: $showingAppPicker) {
             AppBrowserView(manager: manager, isPresented: $showingAppPicker)

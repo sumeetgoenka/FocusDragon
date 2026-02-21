@@ -23,64 +23,78 @@ struct AppBrowserView: View {
     }
 
     var body: some View {
-        VStack {
-            HStack {
-                Text("Select Applications to Block")
-                    .font(.headline)
-                Spacer()
-                Button("Done") {
-                    isPresented = false
-                }
-            }
-            .padding()
+        ZStack {
+            AppBackground()
 
-            // Search bar
-            TextField("Search applications...", text: $searchText)
-                .textFieldStyle(.roundedBorder)
-                .padding(.horizontal)
-
-            if isLoading {
-                ProgressView("Loading applications...")
-                    .padding()
-            } else {
-                List(filteredApps) { app in
-                    HStack {
-                        if let iconPath = app.appIconPath,
-                           let image = NSImage(contentsOfFile: iconPath) {
-                            Image(nsImage: image)
-                                .resizable()
-                                .frame(width: 32, height: 32)
-                        } else {
-                            Image(systemName: "app")
-                                .frame(width: 32, height: 32)
-                        }
-
-                        VStack(alignment: .leading) {
-                            Text(app.displayName)
-                            if let bundleId = app.bundleIdentifier {
-                                Text(bundleId)
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            }
-                        }
-
-                        Spacer()
-
-                        if isAppBlocked(app) {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundColor(.green)
-                        } else {
-                            Button("Add") {
-                                manager.addApplication(app)
-                            }
-                            .buttonStyle(.bordered)
-                        }
+            VStack {
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Select Applications")
+                            .font(AppTheme.headerFont(16))
+                        Text("Pick apps to block during focus sessions.")
+                            .font(AppTheme.bodyFont(12))
+                            .foregroundColor(.secondary)
                     }
-                    .padding(.vertical, 4)
+                    Spacer()
+                    Button("Done") {
+                        isPresented = false
+                    }
+                    .buttonStyle(SecondaryButtonStyle())
+                }
+                .padding()
+
+                TextField("Search applications...", text: $searchText)
+                    .textFieldStyle(.roundedBorder)
+                    .padding(.horizontal)
+
+                if isLoading {
+                    ProgressView("Loading applications...")
+                        .padding()
+                } else {
+                    List(filteredApps) { app in
+                        HStack {
+                            if let iconPath = app.appIconPath,
+                               let image = NSImage(contentsOfFile: iconPath) {
+                                Image(nsImage: image)
+                                    .resizable()
+                                    .frame(width: 28, height: 28)
+                                    .cornerRadius(6)
+                            } else {
+                                Image(systemName: "app")
+                                    .frame(width: 28, height: 28)
+                            }
+
+                            VStack(alignment: .leading) {
+                                Text(app.displayName)
+                                    .font(AppTheme.bodyFont(12))
+                                if let bundleId = app.bundleIdentifier {
+                                    Text(bundleId)
+                                        .font(AppTheme.bodyFont(10))
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+
+                            Spacer()
+
+                            if isAppBlocked(app) {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundColor(AppTheme.accent)
+                            } else {
+                                Button("Add") {
+                                    manager.addApplication(app)
+                                }
+                                .buttonStyle(SecondaryButtonStyle())
+                            }
+                        }
+                        .padding(.vertical, 4)
+                        .listRowBackground(Color.clear)
+                    }
+                    .listStyle(.plain)
+                    .scrollContentBackground(.hidden)
                 }
             }
         }
-        .frame(width: 600, height: 500)
+        .frame(width: 620, height: 520)
         .onAppear {
             loadApplications()
         }

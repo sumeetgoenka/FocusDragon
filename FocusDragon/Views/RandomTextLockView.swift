@@ -24,14 +24,13 @@ struct RandomTextLockView: View {
         VStack(spacing: 15) {
             Image(systemName: "keyboard.badge.ellipsis")
                 .font(.system(size: 60))
-                .foregroundColor(.purple)
+                .foregroundColor(AppTheme.electricBlue)
 
             Text("Random Text Lock")
-                .font(.title2)
-                .fontWeight(.semibold)
+                .font(AppTheme.headerFont(18))
 
             Text("You'll need to type a random code to unlock")
-                .font(.subheadline)
+                .font(AppTheme.bodyFont(12))
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
 
@@ -40,14 +39,14 @@ struct RandomTextLockView: View {
                 Label("Prevents impulsive unblocking", systemImage: "checkmark.circle")
                 Label("Maximum 5 attempts", systemImage: "checkmark.circle")
             }
-            .font(.subheadline)
+            .font(AppTheme.bodyFont(12))
             .foregroundColor(.secondary)
 
             Button("Activate Random Text Lock") {
                 controller.activate()
                 isInputFocused = true
             }
-            .buttonStyle(.borderedProminent)
+            .buttonStyle(PrimaryGlowButtonStyle())
         }
     }
 
@@ -56,17 +55,16 @@ struct RandomTextLockView: View {
             // Lock icon
             ZStack {
                 Circle()
-                    .fill(Color.purple.opacity(0.1))
+                    .fill(AppTheme.electricBlue.opacity(0.12))
                     .frame(width: 100, height: 100)
 
                 Image(systemName: "lock.fill")
                     .font(.system(size: 40))
-                    .foregroundColor(.purple)
+                    .foregroundColor(AppTheme.electricBlue)
             }
 
             Text("Random Text Lock Active")
-                .font(.title3)
-                .fontWeight(.semibold)
+                .font(AppTheme.headerFont(16))
 
             // Display random text
             randomTextDisplay
@@ -86,11 +84,11 @@ struct RandomTextLockView: View {
     private var randomTextDisplay: some View {
         VStack(spacing: 10) {
             Text("Type this code to unlock:")
-                .font(.subheadline)
+                .font(AppTheme.bodyFont(12))
                 .foregroundColor(.secondary)
 
             Text(controller.displayText)
-                .font(.system(size: 36, weight: .bold, design: .monospaced))
+                .font(AppTheme.titleFont(32))
                 .tracking(5)
                 .padding()
                 .background(Color(.controlBackgroundColor))
@@ -99,9 +97,9 @@ struct RandomTextLockView: View {
 
             HStack(spacing: 5) {
                 Image(systemName: "info.circle")
-                    .font(.caption)
+                    .font(AppTheme.bodyFont(10))
                 Text("Copy-paste disabled. Must type manually.")
-                    .font(.caption)
+                    .font(AppTheme.bodyFont(10))
             }
             .foregroundColor(.orange)
         }
@@ -124,14 +122,14 @@ struct RandomTextLockView: View {
                     Image(systemName: "exclamationmark.triangle.fill")
                     Text(error)
                 }
-                .font(.subheadline)
+                .font(AppTheme.bodyFont(12))
                 .foregroundColor(.red)
             }
 
             Button("Verify Code") {
                 verifyInput()
             }
-            .buttonStyle(.borderedProminent)
+            .buttonStyle(PrimaryGlowButtonStyle())
             .disabled(userInput.isEmpty)
         }
     }
@@ -143,16 +141,16 @@ struct RandomTextLockView: View {
                 .foregroundColor(.red)
 
             Text("Maximum Attempts Reached")
-                .font(.headline)
+                .font(AppTheme.headerFont(15))
                 .foregroundColor(.red)
 
             Text("Lock cannot be removed. Block will remain active.")
-                .font(.subheadline)
+                .font(AppTheme.bodyFont(12))
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
 
             Text("You can only stop blocking by:")
-                .font(.caption)
+                .font(AppTheme.bodyFont(11))
                 .foregroundColor(.secondary)
 
             VStack(alignment: .leading, spacing: 5) {
@@ -160,7 +158,7 @@ struct RandomTextLockView: View {
                 Text("• Waiting for schedule window (if set)")
                 Text("• Restarting required times (if set)")
             }
-            .font(.caption)
+            .font(AppTheme.bodyFont(11))
             .foregroundColor(.secondary)
         }
         .padding()

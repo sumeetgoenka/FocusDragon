@@ -7,24 +7,32 @@ struct LockSettingsView: View {
     @State private var timerMinutes: Int = 0
     @State private var restartCount: Int = 1
     @State private var breakDelay: TimeInterval = 60
+    @State private var frozenHours: Int = 1
+    @State private var frozenMinutes: Int = 0
+    @State private var frozenMode: FrozenMode = .lockScreen
+    @State private var frozenAllowedApps: [BlockItem] = []
     @State private var showError: Bool = false
     @State private var errorMessage: String = ""
     @State private var protectionLevel: ProtectionLevel = ProtectionLevel.current
 
     var body: some View {
-        VStack(spacing: 20) {
-            Text("Add Lock Protection")
-                .font(.headline)
+        ZStack {
+            AppBackground()
 
-            protectionLevelPicker
+            ScrollView {
+                VStack(spacing: 20) {
+                    headerSection
+                    protectionLevelPicker
 
-            if lockManager.currentLock.isLocked {
-                currentLockView
-            } else {
-                lockSelectionView
+                    if lockManager.currentLock.isLocked {
+                        currentLockView
+                    } else {
+                        lockSelectionView
+                    }
+                }
+                .padding()
             }
         }
-        .padding()
         .alert("Error", isPresented: $showError) {
             Button("OK", role: .cancel) {}
         } message: {
@@ -32,108 +40,122 @@ struct LockSettingsView: View {
         }
     }
 
+    private var headerSection: some View {
+        VStack(spacing: 6) {
+            Text("Lock Protection")
+                .font(AppTheme.titleFont(22))
+            Text("Choose a lock to prevent stopping early.")
+                .font(AppTheme.bodyFont(12))
+                .foregroundColor(.secondary)
+        }
+    }
+
     // MARK: - Protection Level
 
     private var protectionLevelPicker: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Protection Level")
-                .font(.subheadline)
-                .fontWeight(.medium)
+        AppCard {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Protection Level")
+                    .font(AppTheme.headerFont(15))
 
-            Picker("Protection Level", selection: $protectionLevel) {
-                ForEach(ProtectionLevel.allCases, id: \.self) { level in
-                    HStack {
-                        Image(systemName: level.icon)
-                        Text(level.displayName)
-                    }.tag(level)
+                Picker("Protection Level", selection: $protectionLevel) {
+                    ForEach(ProtectionLevel.allCases, id: \.self) { level in
+                        HStack {
+                            Image(systemName: level.icon)
+                            Text(level.displayName)
+                        }.tag(level)
+                    }
                 }
-            }
-            .pickerStyle(.segmented)
-            .onChange(of: protectionLevel) { newLevel in
-                ProtectionLevel.current = newLevel
-                TamperDetection.shared.startMonitoring(level: newLevel)
-            }
+                .pickerStyle(.segmented)
+                .onChange(of: protectionLevel) { newLevel in
+                    ProtectionLevel.current = newLevel
+                    TamperDetection.shared.startMonitoring(level: newLevel)
+                }
 
-            Text(protectionLevel.description)
-                .font(.caption)
-                .foregroundColor(.secondary)
+                Text(protectionLevel.description)
+                    .font(AppTheme.bodyFont(11))
+                    .foregroundColor(.secondary)
+            }
         }
-        .padding()
-        .background(Color(.controlBackgroundColor))
-        .cornerRadius(8)
     }
 
     private var currentLockView: some View {
-        VStack(spacing: 15) {
-            HStack {
-                Image(systemName: "lock.fill")
-                    .foregroundColor(.red)
-                Text("Block is Locked")
-                    .font(.title3)
-                    .fontWeight(.semibold)
+        AppCard {
+            VStack(spacing: 15) {
+                HStack {
+                    Image(systemName: "lock.fill")
+                        .foregroundColor(AppTheme.flame)
+                    Text("Block is Locked")
+                        .font(AppTheme.headerFont(18))
+                }
+
+                Text(lockManager.currentLock.type.displayName)
+                    .font(AppTheme.bodyFont(12))
+                    .foregroundColor(.secondary)
+
+                switch lockManager.currentLock.type {
+                case .timer:
+                    timerLockStatus
+                case .randomText:
+                    randomTextLockStatus
+                case .schedule:
+                    scheduleLockStatus
+                case .restart:
+                    restartLockStatus
+                case .breakable:
+                    breakableLockStatus
+                case .frozen:
+                    frozenLockStatus
+                default:
+                    EmptyView()
+                }
+
+                Divider()
+
+                unlockButton
             }
-
-            Text(lockManager.currentLock.type.displayName)
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-
-            switch lockManager.currentLock.type {
-            case .timer:
-                timerLockStatus
-            case .randomText:
-                randomTextLockStatus
-            case .schedule:
-                scheduleLockStatus
-            case .restart:
-                restartLockStatus
-            case .breakable:
-                breakableLockStatus
-            default:
-                EmptyView()
-            }
-
-            Divider()
-
-            unlockButton
         }
-        .padding()
-        .background(Color(.controlBackgroundColor))
-        .cornerRadius(8)
     }
 
     private var lockSelectionView: some View {
-        VStack(spacing: 15) {
-            Picker("Lock Type", selection: $selectedLockType) {
-                Text("No Lock").tag(LockType.none)
-                Text("Timer Lock").tag(LockType.timer)
-                Text("Random Text Lock").tag(LockType.randomText)
-                Text("Schedule Lock").tag(LockType.schedule)
-                Text("Restart Lock").tag(LockType.restart)
-                Text("Breakable Lock").tag(LockType.breakable)
-            }
-            .pickerStyle(.segmented)
-
-            switch selectedLockType {
-            case .timer:
-                timerLockConfiguration
-            case .randomText:
-                randomTextLockConfiguration
-            case .schedule:
-                scheduleLockConfiguration
-            case .restart:
-                restartLockConfiguration
-            case .breakable:
-                breakableLockConfiguration
-            default:
-                Text("No lock protection")
-                    .foregroundColor(.secondary)
-            }
-
-            if selectedLockType != .none && selectedLockType != .schedule {
-                Button("Apply Lock") {
-                    applyLock()
+        AppCard {
+            VStack(spacing: 15) {
+                Picker("Lock Type", selection: $selectedLockType) {
+                    Text("No Lock").tag(LockType.none)
+                    Text("Timer Lock").tag(LockType.timer)
+                    Text("Random Text Lock").tag(LockType.randomText)
+                    Text("Schedule Lock").tag(LockType.schedule)
+                    Text("Restart Lock").tag(LockType.restart)
+                    Text("Breakable Lock").tag(LockType.breakable)
+                    Text("Frozen Turkey").tag(LockType.frozen)
                 }
-                .buttonStyle(.borderedProminent)
+                .pickerStyle(.segmented)
+
+                switch selectedLockType {
+                case .timer:
+                    timerLockConfiguration
+                case .randomText:
+                    randomTextLockConfiguration
+                case .schedule:
+                    scheduleLockConfiguration
+                case .restart:
+                    restartLockConfiguration
+                case .breakable:
+                    breakableLockConfiguration
+                case .frozen:
+                    frozenLockConfiguration
+                default:
+                    Text("No lock protection")
+                        .font(AppTheme.bodyFont(12))
+                        .foregroundColor(.secondary)
+                }
+
+                if selectedLockType != .none && selectedLockType != .schedule {
+                    Button("Apply Lock") {
+                        applyLock()
+                    }
+                    .buttonStyle(PrimaryGlowButtonStyle())
+                }
             }
         }
     }
@@ -143,7 +165,7 @@ struct LockSettingsView: View {
     private var timerLockConfiguration: some View {
         VStack(spacing: 10) {
             Text("Block will unlock after:")
-                .font(.subheadline)
+                .font(AppTheme.bodyFont(12))
 
             HStack {
                 Stepper("Hours: \(timerHours)", value: $timerHours, in: 0...24)
@@ -151,7 +173,7 @@ struct LockSettingsView: View {
             }
 
             Text("Total: \(formatDuration())")
-                .font(.caption)
+                .font(AppTheme.bodyFont(11))
                 .foregroundColor(.secondary)
         }
     }
@@ -159,11 +181,11 @@ struct LockSettingsView: View {
     private var randomTextLockConfiguration: some View {
         VStack(spacing: 10) {
             Text("You will need to type a random text to unlock")
-                .font(.subheadline)
+                .font(AppTheme.bodyFont(12))
                 .multilineTextAlignment(.center)
 
             Text("Maximum \(lockManager.configuration.maxTextAttempts) attempts")
-                .font(.caption)
+                .font(AppTheme.bodyFont(11))
                 .foregroundColor(.secondary)
         }
     }
@@ -175,12 +197,12 @@ struct LockSettingsView: View {
     private var restartLockConfiguration: some View {
         VStack(spacing: 10) {
             Text("Number of restarts required to unlock:")
-                .font(.subheadline)
+                .font(AppTheme.bodyFont(12))
 
             Stepper("Restarts: \(restartCount)", value: $restartCount, in: 1...10)
 
             Text("You must restart your Mac \(restartCount) time(s) to unlock")
-                .font(.caption)
+                .font(AppTheme.bodyFont(11))
                 .foregroundColor(.secondary)
         }
     }
@@ -188,7 +210,7 @@ struct LockSettingsView: View {
     private var breakableLockConfiguration: some View {
         VStack(spacing: 10) {
             Text("Delay before unlock becomes available:")
-                .font(.subheadline)
+                .font(AppTheme.bodyFont(12))
 
             Picker("Delay", selection: $breakDelay) {
                 ForEach(BreakableLockController.delayPresets, id: \.seconds) { preset in
@@ -197,7 +219,62 @@ struct LockSettingsView: View {
             }
 
             Text("When you request unlock, you must wait this long")
-                .font(.caption)
+                .font(AppTheme.bodyFont(11))
+                .foregroundColor(.secondary)
+        }
+    }
+
+    private var frozenLockConfiguration: some View {
+        VStack(spacing: 12) {
+            Text("Frozen Turkey Mode")
+                .font(AppTheme.headerFont(14))
+
+            HStack {
+                Stepper("Hours: \(frozenHours)", value: $frozenHours, in: 0...24)
+                Stepper("Minutes: \(frozenMinutes)", value: $frozenMinutes, in: 0...59)
+            }
+
+            Picker("Mode", selection: $frozenMode) {
+                Text("Lock Screen").tag(FrozenMode.lockScreen)
+                Text("Logout").tag(FrozenMode.logout)
+                Text("Shutdown").tag(FrozenMode.shutdown)
+                Text("Limited Access").tag(FrozenMode.limitedAccess)
+            }
+            .pickerStyle(.segmented)
+
+            if frozenMode == .limitedAccess {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Allowed Apps")
+                        .font(AppTheme.bodyFont(11))
+                        .foregroundColor(.secondary)
+                    Button("Add Allowed App") {
+                        AppSelector.shared.selectApplication { item in
+                            guard let item else { return }
+                            if !frozenAllowedApps.contains(where: { $0.bundleIdentifier == item.bundleIdentifier }) {
+                                frozenAllowedApps.append(item)
+                            }
+                        }
+                    }
+                    .buttonStyle(SecondaryButtonStyle())
+
+                    ForEach(frozenAllowedApps, id: \.id) { app in
+                        HStack {
+                            Text(app.appName ?? app.displayName)
+                            Spacer()
+                            Button(role: .destructive) {
+                                frozenAllowedApps.removeAll { $0.id == app.id }
+                            } label: {
+                                Image(systemName: "trash")
+                            }
+                            .buttonStyle(SecondaryButtonStyle())
+                            .controlSize(.small)
+                        }
+                    }
+                }
+            }
+
+            Text("Duration: \(formatFrozenDuration())")
+                .font(AppTheme.bodyFont(11))
                 .foregroundColor(.secondary)
         }
     }
@@ -208,10 +285,9 @@ struct LockSettingsView: View {
         VStack(spacing: 5) {
             if let remaining = lockManager.currentLock.remainingTime {
                 Text("Time Remaining:")
-                    .font(.caption)
+                    .font(AppTheme.bodyFont(11))
                 Text(formatTimeInterval(remaining))
-                    .font(.title2)
-                    .fontWeight(.bold)
+                    .font(AppTheme.titleFont(22))
                     .monospacedDigit()
             }
         }
@@ -220,22 +296,21 @@ struct LockSettingsView: View {
     private var randomTextLockStatus: some View {
         VStack(spacing: 5) {
             Text("Random Text Lock Active")
-                .font(.caption)
+                .font(AppTheme.bodyFont(11))
             Text("Attempts: \(lockManager.currentLock.textAttempts)/\(lockManager.currentLock.maxAttempts)")
-                .font(.subheadline)
+                .font(AppTheme.bodyFont(12))
         }
     }
 
     private var scheduleLockStatus: some View {
         VStack(spacing: 5) {
             Text("Schedule Lock Active")
-                .font(.caption)
+                .font(AppTheme.bodyFont(11))
             if let active = ScheduleLockController.shared.activeSchedule {
                 Text(active.name)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
+                    .font(AppTheme.bodyFont(12))
                 Text(active.formattedTimeRange)
-                    .font(.caption)
+                    .font(AppTheme.bodyFont(11))
                     .foregroundColor(.secondary)
             }
         }
@@ -244,18 +319,34 @@ struct LockSettingsView: View {
     private var restartLockStatus: some View {
         VStack(spacing: 5) {
             Text("Restarts Required:")
-                .font(.caption)
+                .font(AppTheme.bodyFont(11))
             Text("\(lockManager.currentLock.remainingRestarts ?? 0)")
-                .font(.title2)
-                .fontWeight(.bold)
+                .font(AppTheme.titleFont(22))
         }
     }
 
     private var breakableLockStatus: some View {
         VStack(spacing: 5) {
             Text("Breakable Lock Active")
-                .font(.caption)
+                .font(AppTheme.bodyFont(11))
             BreakableLockView()
+        }
+    }
+
+    private var frozenLockStatus: some View {
+        VStack(spacing: 5) {
+            if let remaining = lockManager.currentLock.remainingTime {
+                Text("Frozen Mode Active")
+                    .font(AppTheme.bodyFont(11))
+                Text(formatTimeInterval(remaining))
+                    .font(AppTheme.titleFont(22))
+                    .monospacedDigit()
+                if let mode = lockManager.currentLock.frozenMode {
+                    Text(mode.displayName)
+                        .font(AppTheme.bodyFont(10))
+                        .foregroundColor(.secondary)
+                }
+            }
         }
     }
 
@@ -263,8 +354,7 @@ struct LockSettingsView: View {
         Button("Attempt Unlock") {
             attemptUnlock()
         }
-        .buttonStyle(.borderedProminent)
-        .tint(.orange)
+        .buttonStyle(PrimaryGlowButtonStyle(accent: AppTheme.flame))
     }
 
     // MARK: - Actions
@@ -289,6 +379,10 @@ struct LockSettingsView: View {
                 try lockManager.createRestartLock(numberOfRestarts: restartCount)
             case .breakable:
                 try lockManager.createBreakableLock(delay: breakDelay)
+            case .frozen:
+                let duration = TimeInterval(frozenHours * 3600 + frozenMinutes * 60)
+                let allowed = frozenAllowedApps.compactMap { $0.bundleIdentifier }
+                try lockManager.createFrozenLock(duration: duration, mode: frozenMode, allowedApps: allowed)
             default:
                 break
             }
@@ -310,6 +404,11 @@ struct LockSettingsView: View {
 
     private func formatDuration() -> String {
         let total = timerHours * 3600 + timerMinutes * 60
+        return formatTimeInterval(TimeInterval(total))
+    }
+
+    private func formatFrozenDuration() -> String {
+        let total = frozenHours * 3600 + frozenMinutes * 60
         return formatTimeInterval(TimeInterval(total))
     }
 

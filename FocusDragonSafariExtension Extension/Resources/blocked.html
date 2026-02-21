@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Site Blocked - FocusDragon</title>
+    <link rel="stylesheet" href="blocked.css" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="icon">🐉</div>
+      <h1>Site Blocked</h1>
+      <p>This site is blocked by FocusDragon</p>
+      <p class="subtitle">Stay focused on what matters</p>
+
+      <div class="lock-info" id="lock-info" style="display:none">
+        <div class="lock-badge">🔒 <span id="lock-label">Session locked</span></div>
+        <div class="timer" id="timer" style="display:none"></div>
+      </div>
+
+      <div class="actions">
+        <button id="open-app" class="btn btn-secondary">Open FocusDragon</button>
+        <button id="unlock-btn" class="btn btn-primary" style="display:none">Request Unlock</button>
+      </div>
+    </div>
+    <script src="blocked.js" type="module"></script>
+  </body>
+</html>

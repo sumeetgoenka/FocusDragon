@@ -21,15 +21,49 @@ class BlockListManager: ObservableObject {
             saveState()
         }
     }
+    @Published var requireBrowserExtension: Bool = true {
+        didSet {
+            UserDefaults.standard.set(requireBrowserExtension, forKey: requireExtensionKey)
+            saveState()
+        }
+    }
+    @Published var urlExceptions: [URLException] = [] {
+        didSet { saveState() }
+    }
+    @Published var appExceptions: [AppException] = [] {
+        didSet { saveState() }
+    }
+    @Published var internetBlockConfig: InternetBlockConfig = InternetBlockConfig() {
+        didSet { saveState() }
+    }
+    @Published var frozenState: FrozenState? {
+        didSet { saveState() }
+    }
     @Published var stats = BlockStats()
 
     private let userDefaults = UserDefaults.standard
     private let blockedItemsKey = "blockedItems"
     private let isBlockingKey = "isBlocking"
     private let statsKey = "blockStats"
+    private let requireExtensionKey = "requireBrowserExtension"
+    private let urlExceptionsKey = "urlExceptions"
+    private let appExceptionsKey = "appExceptions"
+    private let internetBlockKey = "internetBlockConfig"
+    private let frozenStateKey = "frozenState"
+    private let sharedBlockedDomainsKey = "blockedDomains"
+    private let sharedIsBlockingKey = "isBlocking"
+    private let sharedUrlExceptionsKey = "urlExceptions"
 
     init() {
         loadState()
+
+        NotificationCenter.default.addObserver(
+            forName: Notification.Name("FocusDragonLockStateChanged"),
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.writeDaemonConfig()
+        }
     }
 
     func addDomain(_ domain: String) {
@@ -89,6 +123,22 @@ class BlockListManager: ObservableObject {
 
     func startBlockingSession() {
         stats.startSession()
+        let domains = blockedItems
+            .filter { $0.type == .website && $0.isEnabled }
+            .compactMap { $0.domain }
+        let apps = blockedItems
+            .filter { $0.type == .application && $0.isEnabled }
+            .compactMap { $0.appName ?? $0.bundleIdentifier }
+        StatisticsManager.shared.startSession(
+            domains: domains,
+            apps: apps,
+            lockType: LockManager.shared.currentLock.type
+        )
+        saveState()
+    }
+
+    func endBlockingSession() {
+        StatisticsManager.shared.endSession()
         saveState()
     }
 
@@ -100,6 +150,22 @@ class BlockListManager: ObservableObject {
 
         if let encoded = try? JSONEncoder().encode(stats) {
             userDefaults.set(encoded, forKey: statsKey)
+        }
+
+        if let encoded = try? JSONEncoder().encode(urlExceptions) {
+            userDefaults.set(encoded, forKey: urlExceptionsKey)
+        }
+
+        if let encoded = try? JSONEncoder().encode(appExceptions) {
+            userDefaults.set(encoded, forKey: appExceptionsKey)
+        }
+
+        if let encoded = try? JSONEncoder().encode(internetBlockConfig) {
+            userDefaults.set(encoded, forKey: internetBlockKey)
+        }
+
+        if let encoded = try? JSONEncoder().encode(frozenState) {
+            userDefaults.set(encoded, forKey: frozenStateKey)
         }
 
         writeDaemonConfig()
@@ -131,6 +197,7 @@ class BlockListManager: ObservableObject {
         let lock = lockManager.currentLock
         var sharedLockState: SharedLockState?
         var timerExpiry: Date?
+        var frozenStateToSend: FrozenState? = frozenState
 
         if lock.isLocked {
             sharedLockState = SharedLockState(
@@ -143,6 +210,18 @@ class BlockListManager: ObservableObject {
             if lock.type == .timer {
                 timerExpiry = lock.unlockAt
             }
+            if lock.type == .frozen {
+                timerExpiry = lock.unlockAt
+                if let mode = lock.frozenMode {
+                    frozenStateToSend = FrozenState(
+                        isActive: true,
+                        mode: mode,
+                        startedAt: lock.createdAt,
+                        expiresAt: lock.unlockAt,
+                        allowedAppBundleIDs: lock.frozenAllowedApps ?? []
+                    )
+                }
+            }
         }
 
         let config = DaemonConfig(
@@ -150,8 +229,13 @@ class BlockListManager: ObservableObject {
             lastModified: Date(),
             blockedDomains: enabledDomains,
             blockedApps: enabledApps,
+            urlExceptions: urlExceptions,
+            appExceptions: appExceptions,
+            internetBlockConfig: internetBlockConfig,
+            frozenState: frozenStateToSend,
             lockState: sharedLockState,
-            timerLockExpiry: timerExpiry
+            timerLockExpiry: timerExpiry,
+            requireBrowserExtension: requireBrowserExtension
         )
 
         do {
@@ -164,6 +248,20 @@ class BlockListManager: ObservableObject {
             // Silently fail if directory isn't writable yet (before daemon setup completes).
             print("⚠️ writeDaemonConfig failed (run daemon setup to fix): \(error.localizedDescription)")
         }
+
+        writeSharedExtensionState(domains: enabledDomains, isBlocking: isBlocking, urlExceptions: urlExceptions)
+    }
+
+    private func writeSharedExtensionState(domains: [String], isBlocking: Bool, urlExceptions: [URLException]) {
+        guard let sharedDefaults = UserDefaults(suiteName: SharedConstants.appGroupIdentifier) else {
+            return
+        }
+
+        sharedDefaults.set(domains, forKey: sharedBlockedDomainsKey)
+        sharedDefaults.set(isBlocking, forKey: sharedIsBlockingKey)
+        if let encoded = try? JSONEncoder().encode(urlExceptions) {
+            sharedDefaults.set(encoded, forKey: sharedUrlExceptionsKey)
+        }
     }
 
     private func loadState() {
@@ -172,10 +270,51 @@ class BlockListManager: ObservableObject {
             blockedItems = decoded
         }
         isBlocking = userDefaults.bool(forKey: isBlockingKey)
+        let storedRequireExtension = userDefaults.object(forKey: requireExtensionKey) as? Bool
+        requireBrowserExtension = storedRequireExtension ?? true
+        if requireBrowserExtension == false {
+            requireBrowserExtension = true
+        }
 
         if let data = userDefaults.data(forKey: statsKey),
            let decoded = try? JSONDecoder().decode(BlockStats.self, from: data) {
             stats = decoded
         }
+
+        if let data = userDefaults.data(forKey: urlExceptionsKey),
+           let decoded = try? JSONDecoder().decode([URLException].self, from: data) {
+            urlExceptions = decoded
+        }
+
+        if let data = userDefaults.data(forKey: appExceptionsKey),
+           let decoded = try? JSONDecoder().decode([AppException].self, from: data) {
+            appExceptions = decoded
+        }
+
+        if let data = userDefaults.data(forKey: internetBlockKey),
+           let decoded = try? JSONDecoder().decode(InternetBlockConfig.self, from: data) {
+            internetBlockConfig = decoded
+        }
+
+        if let data = userDefaults.data(forKey: frozenStateKey),
+           let decoded = try? JSONDecoder().decode(FrozenState.self, from: data) {
+            frozenState = decoded
+        }
+    }
+
+    func effectiveWhitelistAppsForEnforcement() -> [String] {
+        var whitelist = Set<String>()
+
+        if let frozen = frozenState,
+           frozen.isActive,
+           frozen.mode == .limitedAccess {
+            whitelist.formUnion(frozen.allowedAppBundleIDs)
+        }
+
+        if internetBlockConfig.isEnabled {
+            whitelist.formUnion(internetBlockConfig.whitelistApps)
+        }
+
+        return Array(whitelist)
     }
 }

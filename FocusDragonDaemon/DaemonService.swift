@@ -19,6 +19,9 @@ class DaemonService {
 
     private var hostsWatcher: HostsWatcher?
     private var processWatcher: ProcessWatcher?
+    private var browserEnforcer: BrowserExtensionEnforcer?
+    private var internetBlocker: InternetBlocker?
+    private var frozenEnforcer: FrozenModeEnforcer?
     private var configTimer: Timer?
     private var restartLockManager: RestartLockManager?
 
@@ -182,12 +185,44 @@ class DaemonService {
 
         let effectiveConfig = currentConfig ?? config
 
-        // Update hosts watcher
-        hostsWatcher?.updateDomains(effectiveConfig.blockedDomains, isBlocking: effectiveConfig.isBlocking)
+        // Update hosts watcher (exclude domains with path exceptions)
+        let exceptionDomains = Set(effectiveConfig.urlExceptions.map { $0.domain.lowercased() })
+        let hostsDomains = effectiveConfig.blockedDomains.filter { !exceptionDomains.contains($0.lowercased()) }
+        hostsWatcher?.updateDomains(hostsDomains, isBlocking: effectiveConfig.isBlocking)
 
         // Update process watcher
         let bundleIDs = effectiveConfig.blockedApps.map { $0.bundleIdentifier }
-        processWatcher?.updateApps(bundleIDs, isBlocking: effectiveConfig.isBlocking)
+        var whitelistApps: [String] = []
+        if effectiveConfig.frozenState?.mode == .limitedAccess {
+            whitelistApps.append(contentsOf: effectiveConfig.frozenState?.allowedAppBundleIDs ?? [])
+        }
+        if effectiveConfig.internetBlockConfig?.isEnabled == true {
+            whitelistApps.append(contentsOf: effectiveConfig.internetBlockConfig?.whitelistApps ?? [])
+        }
+        let uniqueWhitelist = Array(Set(whitelistApps))
+        processWatcher?.updateApps(
+            bundleIDs,
+            isBlocking: effectiveConfig.isBlocking,
+            appExceptions: effectiveConfig.appExceptions,
+            whitelistOnlyApps: uniqueWhitelist
+        )
+
+        // Update browser extension enforcer
+        browserEnforcer?.update(
+            isBlocking: effectiveConfig.isBlocking,
+            requireExtension: effectiveConfig.requireBrowserExtension
+        )
+
+        // Update internet blocker
+        internetBlocker?.update(config: effectiveConfig.internetBlockConfig, isBlocking: effectiveConfig.isBlocking)
+
+        // Update frozen enforcer
+        frozenEnforcer?.update(state: effectiveConfig.frozenState, isBlocking: effectiveConfig.isBlocking)
+
+        // Clear heartbeats when blocking stops
+        if !effectiveConfig.isBlocking {
+            BrowserExtensionEnforcer.clearHeartbeats()
+        }
 
         log("Watchers updated with new configuration", level: .info)
     }
@@ -211,9 +246,44 @@ class DaemonService {
         processWatcher = ProcessWatcher()
         if let config = currentConfig {
             let bundleIDs = config.blockedApps.map { $0.bundleIdentifier }
-            processWatcher?.updateApps(bundleIDs, isBlocking: config.isBlocking)
+            var whitelistApps: [String] = []
+            if config.frozenState?.mode == .limitedAccess {
+                whitelistApps.append(contentsOf: config.frozenState?.allowedAppBundleIDs ?? [])
+            }
+            if config.internetBlockConfig?.isEnabled == true {
+                whitelistApps.append(contentsOf: config.internetBlockConfig?.whitelistApps ?? [])
+            }
+            let uniqueWhitelist = Array(Set(whitelistApps))
+            processWatcher?.updateApps(
+                bundleIDs,
+                isBlocking: config.isBlocking,
+                appExceptions: config.appExceptions,
+                whitelistOnlyApps: uniqueWhitelist
+            )
         }
         processWatcher?.start()
+
+        // Start browser extension enforcer
+        browserEnforcer = BrowserExtensionEnforcer()
+        if let config = currentConfig {
+            browserEnforcer?.update(
+                isBlocking: config.isBlocking,
+                requireExtension: config.requireBrowserExtension
+            )
+        }
+        browserEnforcer?.start()
+
+        // Start internet blocker
+        internetBlocker = InternetBlocker()
+        if let config = currentConfig {
+            internetBlocker?.update(config: config.internetBlockConfig, isBlocking: config.isBlocking)
+        }
+
+        // Start frozen mode enforcer
+        frozenEnforcer = FrozenModeEnforcer()
+        if let config = currentConfig {
+            frozenEnforcer?.update(state: config.frozenState, isBlocking: config.isBlocking)
+        }
 
         log("Watchers started", level: .info)
     }
@@ -221,8 +291,12 @@ class DaemonService {
     private func stopWatchers() {
         hostsWatcher?.stop()
         processWatcher?.stop()
+        browserEnforcer?.stop()
         hostsWatcher = nil
         processWatcher = nil
+        browserEnforcer = nil
+        internetBlocker = nil
+        frozenEnforcer = nil
         log("Watchers stopped", level: .info)
     }
 

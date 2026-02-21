@@ -30,11 +30,10 @@ struct ScheduleLockView: View {
         HStack {
             VStack(alignment: .leading) {
                 Text("Schedule Lock")
-                    .font(.title2)
-                    .fontWeight(.semibold)
+                    .font(AppTheme.headerFont(18))
 
                 Text("Automatic blocking during specific times")
-                    .font(.subheadline)
+                    .font(AppTheme.bodyFont(12))
                     .foregroundColor(.secondary)
             }
 
@@ -43,68 +42,64 @@ struct ScheduleLockView: View {
             if controller.isActive {
                 HStack {
                     Circle()
-                        .fill(Color.green)
+                        .fill(AppTheme.accent)
                         .frame(width: 8, height: 8)
                     Text("Active")
-                        .font(.caption)
-                        .foregroundColor(.green)
+                        .font(AppTheme.bodyFont(11))
+                        .foregroundColor(AppTheme.accent)
                 }
             }
         }
     }
 
     private func activeScheduleCard(_ schedule: ScheduleRule) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Image(systemName: "clock.fill")
-                    .foregroundColor(.green)
-                Text("Currently Active")
-                    .font(.headline)
-                    .foregroundColor(.green)
+        AppCard {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    Image(systemName: "clock.fill")
+                        .foregroundColor(AppTheme.accent)
+                    Text("Currently Active")
+                        .font(AppTheme.headerFont(14))
+                        .foregroundColor(AppTheme.accent)
+                }
+
+                VStack(alignment: .leading, spacing: 5) {
+                    Text(schedule.name)
+                        .font(AppTheme.headerFont(16))
+
+                    Text(schedule.formattedTimeRange)
+                        .font(AppTheme.bodyFont(12))
+                        .foregroundColor(.secondary)
+
+                    Text(schedule.formattedDays)
+                        .font(AppTheme.bodyFont(11))
+                        .foregroundColor(.secondary)
+                }
             }
-
-            VStack(alignment: .leading, spacing: 5) {
-                Text(schedule.name)
-                    .font(.title3)
-                    .fontWeight(.semibold)
-
-                Text(schedule.formattedTimeRange)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-
-                Text(schedule.formattedDays)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding()
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.green.opacity(0.1))
-        .cornerRadius(8)
     }
 
     private var nextActivationCard: some View {
         Group {
             if let next = controller.nextActivation {
-                HStack {
-                    Image(systemName: "calendar.badge.clock")
-                        .foregroundColor(.blue)
+                AppCard {
+                    HStack {
+                        Image(systemName: "calendar.badge.clock")
+                            .foregroundColor(AppTheme.electricBlue)
 
-                    VStack(alignment: .leading) {
-                        Text("Next Activation")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
+                        VStack(alignment: .leading) {
+                            Text("Next Activation")
+                                .font(AppTheme.bodyFont(11))
+                                .foregroundColor(.secondary)
 
-                        Text(formatDate(next))
-                            .font(.subheadline)
-                            .fontWeight(.medium)
+                            Text(formatDate(next))
+                                .font(AppTheme.bodyFont(12))
+                        }
+
+                        Spacer()
                     }
-
-                    Spacer()
                 }
-                .padding()
-                .background(Color.blue.opacity(0.1))
-                .cornerRadius(8)
             }
         }
     }
@@ -128,11 +123,11 @@ struct ScheduleLockView: View {
                 .foregroundColor(.gray)
 
             Text("No Schedules")
-                .font(.headline)
+                .font(AppTheme.headerFont(15))
                 .foregroundColor(.secondary)
 
             Text("Create a schedule to automatically activate blocking")
-                .font(.subheadline)
+                .font(AppTheme.bodyFont(12))
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
         }
@@ -162,7 +157,7 @@ struct ScheduleLockView: View {
             Label("Add Schedule", systemImage: "plus.circle.fill")
                 .frame(maxWidth: .infinity)
         }
-        .buttonStyle(.borderedProminent)
+        .buttonStyle(PrimaryGlowButtonStyle())
     }
 
     private func formatDate(_ date: Date) -> String {
@@ -180,14 +175,14 @@ struct ScheduleRow: View {
         HStack {
             VStack(alignment: .leading, spacing: 5) {
                 Text(schedule.name)
-                    .font(.headline)
+                    .font(AppTheme.headerFont(14))
 
                 Text(schedule.formattedTimeRange)
-                    .font(.subheadline)
+                    .font(AppTheme.bodyFont(12))
                     .foregroundColor(.secondary)
 
                 Text(schedule.formattedDays)
-                    .font(.caption)
+                    .font(AppTheme.bodyFont(11))
                     .foregroundColor(.secondary)
             }
 
@@ -220,15 +215,14 @@ struct ScheduleEditorView: View {
     var body: some View {
         VStack(spacing: 20) {
             Text("Configure Schedule")
-                .font(.title2)
-                .fontWeight(.semibold)
+                .font(AppTheme.headerFont(18))
 
             TextField("Schedule Name", text: $name)
                 .textFieldStyle(.roundedBorder)
 
             VStack(alignment: .leading) {
                 Text("Start Time")
-                    .font(.subheadline)
+                    .font(AppTheme.bodyFont(12))
                     .foregroundColor(.secondary)
 
                 HStack {
@@ -252,7 +246,7 @@ struct ScheduleEditorView: View {
 
             VStack(alignment: .leading) {
                 Text("End Time")
-                    .font(.subheadline)
+                    .font(AppTheme.bodyFont(12))
                     .foregroundColor(.secondary)
 
                 HStack {
@@ -276,7 +270,7 @@ struct ScheduleEditorView: View {
 
             VStack(alignment: .leading) {
                 Text("Days")
-                    .font(.subheadline)
+                    .font(AppTheme.bodyFont(12))
                     .foregroundColor(.secondary)
 
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())]) {
@@ -299,19 +293,19 @@ struct ScheduleEditorView: View {
                     Button("Weekdays") {
                         selectedDays = Weekday.weekdays
                     }
-                    .buttonStyle(.bordered)
+                    .buttonStyle(SecondaryButtonStyle())
                     .controlSize(.small)
 
                     Button("Weekends") {
                         selectedDays = Weekday.weekends
                     }
-                    .buttonStyle(.bordered)
+                    .buttonStyle(SecondaryButtonStyle())
                     .controlSize(.small)
 
                     Button("Every Day") {
                         selectedDays = Weekday.allDays
                     }
-                    .buttonStyle(.bordered)
+                    .buttonStyle(SecondaryButtonStyle())
                     .controlSize(.small)
                 }
                 .padding(.top, 5)
@@ -323,7 +317,7 @@ struct ScheduleEditorView: View {
                 Button("Cancel") {
                     dismiss()
                 }
-                .buttonStyle(.bordered)
+                .buttonStyle(SecondaryButtonStyle())
 
                 Spacer()
 
@@ -331,7 +325,7 @@ struct ScheduleEditorView: View {
                     saveSchedule()
                     dismiss()
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(PrimaryGlowButtonStyle())
                 .disabled(name.isEmpty || selectedDays.isEmpty)
             }
         }

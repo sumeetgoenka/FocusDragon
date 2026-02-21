@@ -25,14 +25,13 @@ struct BreakableLockView: View {
         VStack(spacing: 5) {
             Image(systemName: "hourglass")
                 .font(.system(size: 40))
-                .foregroundColor(.orange)
+                .foregroundColor(AppTheme.flame)
 
             Text("Breakable Lock")
-                .font(.title2)
-                .fontWeight(.semibold)
+                .font(AppTheme.headerFont(18))
 
             Text("Adds a non-skippable delay before unlocking")
-                .font(.subheadline)
+                .font(AppTheme.bodyFont(12))
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
         }
@@ -43,7 +42,7 @@ struct BreakableLockView: View {
     private var configurationView: some View {
         VStack(spacing: 15) {
             Text("Choose delay duration:")
-                .font(.subheadline)
+                .font(AppTheme.bodyFont(12))
                 .foregroundColor(.secondary)
 
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
@@ -52,11 +51,10 @@ struct BreakableLockView: View {
                         selectedDelay = preset.seconds
                     }) {
                         Text(preset.label)
-                            .font(.subheadline)
-                            .fontWeight(.medium)
+                            .font(AppTheme.bodyFont(12))
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 10)
-                            .background(selectedDelay == preset.seconds ? Color.orange : Color(.controlBackgroundColor))
+                            .background(selectedDelay == preset.seconds ? AppTheme.flame : Color(.controlBackgroundColor))
                             .foregroundColor(selectedDelay == preset.seconds ? .white : .primary)
                             .cornerRadius(8)
                     }
@@ -65,7 +63,7 @@ struct BreakableLockView: View {
             }
 
             Text("When you request an unlock, you'll wait \(formatDelay(selectedDelay)) before it takes effect.")
-                .font(.caption)
+                .font(AppTheme.bodyFont(11))
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.top, 5)
@@ -79,35 +77,35 @@ struct BreakableLockView: View {
             ZStack {
                 // Background circle
                 Circle()
-                    .stroke(Color.orange.opacity(0.2), lineWidth: 8)
+                    .stroke(AppTheme.flame.opacity(0.2), lineWidth: 8)
                     .frame(width: 150, height: 150)
 
                 // Progress circle
                 Circle()
                     .trim(from: 0, to: controller.progress)
-                    .stroke(Color.orange, style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                    .stroke(AppTheme.flame, style: StrokeStyle(lineWidth: 8, lineCap: .round))
                     .frame(width: 150, height: 150)
                     .rotationEffect(.degrees(-90))
                     .animation(.linear(duration: 0.1), value: controller.progress)
 
                 VStack(spacing: 5) {
                     Text(controller.formattedRemaining)
-                        .font(.system(size: 36, weight: .bold, design: .monospaced))
-                        .foregroundColor(.orange)
+                        .font(AppTheme.titleFont(32))
+                        .foregroundColor(AppTheme.flame)
 
                     Text("remaining")
-                        .font(.caption)
+                        .font(AppTheme.bodyFont(11))
                         .foregroundColor(.secondary)
                 }
             }
 
             Text("Please wait — this countdown cannot be skipped.")
-                .font(.subheadline)
+                .font(AppTheme.bodyFont(12))
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
 
             ProgressView(value: controller.progress)
-                .tint(.orange)
+                .tint(AppTheme.flame)
                 .padding(.horizontal, 20)
         }
     }
@@ -121,11 +119,11 @@ struct BreakableLockView: View {
                 .foregroundColor(.green)
 
             Text("Countdown Complete")
-                .font(.headline)
+                .font(AppTheme.headerFont(15))
                 .foregroundColor(.green)
 
             Text("You may now unlock blocking.")
-                .font(.subheadline)
+                .font(AppTheme.bodyFont(12))
                 .foregroundColor(.secondary)
         }
     }

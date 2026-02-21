@@ -14,12 +14,11 @@ struct DaemonStatusView: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            Circle()
-                .fill(statusColor)
-                .frame(width: 8, height: 8)
+            PulsingDot(color: statusColor)
+                .frame(width: 10, height: 10)
 
             Text(installer.status.displayName)
-                .font(.caption)
+                .font(AppTheme.bodyFont(11))
                 .foregroundColor(.secondary)
 
             if !installer.status.isRunning {
@@ -30,8 +29,8 @@ struct DaemonStatusView: View {
                         showSetup = true
                     }
                 }
-                .buttonStyle(.link)
-                .font(.caption)
+                .buttonStyle(SecondaryButtonStyle())
+                .controlSize(.small)
             }
         }
         .onAppear {

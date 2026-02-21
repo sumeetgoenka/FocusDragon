@@ -31,6 +31,8 @@ class ProcessWatcher {
     private var timer: Timer?
     private var blockedBundleIDs: Set<String> = []
     private var isBlocking = false
+    private var appExceptions: [AppException] = []
+    private var whitelistOnlyApps: Set<String> = []
     private var terminationCount: [String: Int] = [:]
     private var respawnDetection: [String: Date] = [:]
 
@@ -53,12 +55,17 @@ class ProcessWatcher {
         log("ProcessWatcher stopped", level: .info)
     }
 
-    func updateApps(_ bundleIDs: [String], isBlocking: Bool) {
+    func updateApps(_ bundleIDs: [String],
+                    isBlocking: Bool,
+                    appExceptions: [AppException] = [],
+                    whitelistOnlyApps: [String] = []) {
         // Filter out protected system apps
         let safeIDs = Set(bundleIDs).subtracting(protectedApps)
 
         self.blockedBundleIDs = safeIDs
         self.isBlocking = isBlocking
+        self.appExceptions = appExceptions
+        self.whitelistOnlyApps = Set(whitelistOnlyApps)
 
         let filteredCount = bundleIDs.count - safeIDs.count
         if filteredCount > 0 {
@@ -80,18 +87,48 @@ class ProcessWatcher {
     // MARK: - Private Methods
 
     private func scanProcesses() {
-        guard isBlocking && !blockedBundleIDs.isEmpty else { return }
+        guard isBlocking else { return }
 
         let runningApps = NSWorkspace.shared.runningApplications
+
+        if !whitelistOnlyApps.isEmpty {
+            enforceWhitelistOnly(runningApps: runningApps)
+            return
+        }
+
+        guard !blockedBundleIDs.isEmpty else { return }
+
+        let now = Date()
+        let allowedExceptions = Set(appExceptions.filter { $0.isActive(on: now) }.map { $0.bundleIdentifier })
 
         for app in runningApps {
             guard let bundleID = app.bundleIdentifier else { continue }
 
             // Check if this app should be blocked
-            if blockedBundleIDs.contains(bundleID) {
+            if blockedBundleIDs.contains(bundleID), !allowedExceptions.contains(bundleID) {
                 terminateApp(app, bundleID: bundleID)
             }
         }
+    }
+
+    private func enforceWhitelistOnly(runningApps: [NSRunningApplication]) {
+        let allowed = whitelistOnlyApps.union(protectedApps).union([SharedConstants.appBundleIdentifier])
+
+        for app in runningApps {
+            guard let bundleID = app.bundleIdentifier else { continue }
+            if allowed.contains(bundleID) { continue }
+            if !isUserFacingApp(app) { continue }
+            terminateApp(app, bundleID: bundleID)
+        }
+    }
+
+    private func isUserFacingApp(_ app: NSRunningApplication) -> Bool {
+        guard let bundleURL = app.bundleURL else { return false }
+        let path = bundleURL.path
+        if path.hasPrefix("/Applications/") || path.hasPrefix("/Users/") {
+            return true
+        }
+        return false
     }
 
     private func terminateApp(_ app: NSRunningApplication, bundleID: String) {

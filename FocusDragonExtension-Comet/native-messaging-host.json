@@ -1,0 +1,9 @@
+{
+  "name": "com.focusdragon.nativehost",
+  "description": "FocusDragon Native Messaging Host",
+  "path": "/usr/local/bin/focusdragon-native-host",
+  "type": "stdio",
+  "allowed_origins": [
+    "chrome-extension://EXTENSION_ID_HERE/"
+  ]
+}

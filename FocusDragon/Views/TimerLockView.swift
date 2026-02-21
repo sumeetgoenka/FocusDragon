@@ -34,7 +34,7 @@ struct TimerLockView: View {
     private var activeTimerView: some View {
         VStack(spacing: 20) {
             Text("Timer Lock Active")
-                .font(.headline)
+                .font(AppTheme.headerFont(16))
 
             ZStack {
                 // Background circle
@@ -47,7 +47,7 @@ struct TimerLockView: View {
                     .trim(from: 0, to: CGFloat(controller.progress))
                     .stroke(
                         AngularGradient(
-                            gradient: Gradient(colors: [.blue, .purple]),
+                            gradient: Gradient(colors: [AppTheme.accent, AppTheme.electricBlue]),
                             center: .center,
                             startAngle: .degrees(0),
                             endAngle: .degrees(360)
@@ -60,16 +60,16 @@ struct TimerLockView: View {
 
                 VStack(spacing: 5) {
                     Text(controller.formattedTime)
-                        .font(.system(size: 40, weight: .bold, design: .monospaced))
+                        .font(AppTheme.titleFont(36))
 
                     Text("remaining")
-                        .font(.caption)
+                        .font(AppTheme.bodyFont(11))
                         .foregroundColor(.secondary)
                 }
             }
 
             Text("Block cannot be stopped until timer expires")
-                .font(.subheadline)
+                .font(AppTheme.bodyFont(12))
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
 
@@ -80,12 +80,12 @@ struct TimerLockView: View {
     private var timerConfigurationView: some View {
         VStack(spacing: 20) {
             Text("Set Timer Lock Duration")
-                .font(.headline)
+                .font(AppTheme.headerFont(16))
 
             // Preset buttons
             VStack(spacing: 10) {
                 Text("Quick Presets")
-                    .font(.subheadline)
+                    .font(AppTheme.bodyFont(12))
                     .foregroundColor(.secondary)
 
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
@@ -94,11 +94,11 @@ struct TimerLockView: View {
                             applyPreset(preset.1)
                         }) {
                             Text(preset.0)
-                                .font(.subheadline)
+                                .font(AppTheme.bodyFont(12))
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 8)
                         }
-                        .buttonStyle(.bordered)
+                        .buttonStyle(SecondaryButtonStyle())
                     }
                 }
             }
@@ -108,13 +108,13 @@ struct TimerLockView: View {
             // Custom duration
             VStack(spacing: 10) {
                 Text("Custom Duration")
-                    .font(.subheadline)
+                    .font(AppTheme.bodyFont(12))
                     .foregroundColor(.secondary)
 
                 HStack(spacing: 20) {
                     VStack {
                         Text("Hours")
-                            .font(.caption)
+                            .font(AppTheme.bodyFont(11))
                         Picker("Hours", selection: $hours) {
                             ForEach(0..<25) { hour in
                                 Text("\(hour)").tag(hour)
@@ -129,7 +129,7 @@ struct TimerLockView: View {
 
                     VStack {
                         Text("Minutes")
-                            .font(.caption)
+                            .font(AppTheme.bodyFont(11))
                         Picker("Minutes", selection: $minutes) {
                             ForEach(0..<60) { minute in
                                 Text(String(format: "%02d", minute)).tag(minute)
@@ -142,7 +142,7 @@ struct TimerLockView: View {
                 Button("Start Timer Lock") {
                     startTimer()
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(PrimaryGlowButtonStyle())
                 .disabled(totalSeconds == 0)
             }
         }
@@ -159,7 +159,7 @@ struct TimerLockView: View {
 
                     Rectangle()
                         .fill(LinearGradient(
-                            gradient: Gradient(colors: [.blue, .purple]),
+                            gradient: Gradient(colors: [AppTheme.accent, AppTheme.electricBlue]),
                             startPoint: .leading,
                             endPoint: .trailing
                         ))
@@ -172,13 +172,13 @@ struct TimerLockView: View {
 
             HStack {
                 Text("Started: \(formattedStartTime)")
-                    .font(.caption2)
+                    .font(AppTheme.bodyFont(10))
                     .foregroundColor(.secondary)
 
                 Spacer()
 
                 Text(String(format: "%.1f%%", controller.progress * 100))
-                    .font(.caption2)
+                    .font(AppTheme.bodyFont(10))
                     .foregroundColor(.secondary)
             }
         }

@@ -7,6 +7,7 @@ enum LockType: String, Codable {
     case schedule = "schedule"
     case restart = "restart"
     case breakable = "breakable"
+    case frozen = "frozen"
 
     var displayName: String {
         switch self {
@@ -16,6 +17,7 @@ enum LockType: String, Codable {
         case .schedule: return "Schedule Lock"
         case .restart: return "Restart Lock"
         case .breakable: return "Breakable Lock"
+        case .frozen: return "Frozen Turkey"
         }
     }
 }
@@ -47,6 +49,10 @@ struct LockState: Codable, Equatable {
     // Breakable lock properties
     var breakDelay: TimeInterval?
     var breakCountdownStarted: Bool = false
+
+    // Frozen mode properties
+    var frozenMode: FrozenMode?
+    var frozenAllowedApps: [String]?
 
     init(type: LockType) {
         self.type = type
@@ -81,6 +87,8 @@ struct LockState: Codable, Equatable {
             return (remainingRestarts ?? 0) <= 0
         case .breakable:
             return BreakableLockController.shared.isReadyToUnlock
+        case .frozen:
+            return isTimerExpired
         }
     }
 
@@ -109,7 +117,7 @@ struct LockState: Codable, Equatable {
 }
 
 struct LockConfiguration: Codable {
-    var allowedLockTypes: Set<LockType> = [.timer, .randomText, .schedule, .restart, .breakable]
+    var allowedLockTypes: Set<LockType> = [.timer, .randomText, .schedule, .restart, .breakable, .frozen]
     var minTimerDuration: TimeInterval = 60 // 1 minute
     var maxTimerDuration: TimeInterval = 86400 // 24 hours
     var randomTextLength: Int = 8

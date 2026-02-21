@@ -17,30 +17,33 @@ struct DaemonSetupView: View {
     private let installer = DaemonInstaller.shared
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Header
-            stepHeader
-                .padding(.bottom, 20)
+        ZStack {
+            AppBackground()
 
-            // Step content
-            Group {
-                switch currentStep {
-                case 0: welcomeStep
-                case 1: backgroundServiceStep
-                case 2: fullDiskAccessStep
-                case 3: doneStep
-                default: EmptyView()
+            VStack(spacing: 0) {
+                stepHeader
+                    .padding(.bottom, 20)
+
+                AppCard {
+                    Group {
+                        switch currentStep {
+                        case 0: welcomeStep
+                        case 1: backgroundServiceStep
+                        case 2: fullDiskAccessStep
+                        case 3: doneStep
+                        default: EmptyView()
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
                 }
+
+                Spacer()
+
+                stepNavigation
             }
-            .frame(maxWidth: .infinity)
-
-            Spacer()
-
-            // Navigation
-            stepNavigation
+            .padding(30)
         }
-        .frame(width: 520, height: 500)
-        .padding(30)
+        .frame(width: 560, height: 540)
         .alert("Setup Error", isPresented: $showError) {
             Button("OK") { }
         } message: {
@@ -54,14 +57,14 @@ struct DaemonSetupView: View {
         VStack(spacing: 16) {
             Image(systemName: "shield.checkerboard")
                 .font(.system(size: 56))
-                .foregroundStyle(.blue.gradient)
+                .foregroundStyle(AppTheme.accent.gradient)
 
             Text("Set Up Permissions")
-                .font(.title2)
-                .fontWeight(.bold)
+                .font(AppTheme.titleFont(22))
 
             Text("FocusDragon needs a couple of system permissions to enforce blocks reliably. No admin password required — just toggle a few switches.")
                 .multilineTextAlignment(.center)
+                .font(AppTheme.bodyFont(12))
                 .foregroundColor(.secondary)
                 .padding(.horizontal, 20)
 
@@ -81,11 +84,10 @@ struct DaemonSetupView: View {
         VStack(spacing: 16) {
             Image(systemName: "gearshape.arrow.triangle.2.circlepath")
                 .font(.system(size: 48))
-                .foregroundStyle(.orange.gradient)
+                .foregroundStyle(AppTheme.flame.gradient)
 
             Text("Enable Background Service")
-                .font(.title2)
-                .fontWeight(.bold)
+                .font(AppTheme.titleFont(22))
 
             if installer.status == .enabled {
                 Label("Background service is active!", systemImage: "checkmark.circle.fill")
@@ -104,19 +106,20 @@ struct DaemonSetupView: View {
             } else {
                 Text("Click the button below to register the background service. The system will ask you to approve it in **System Settings → Login Items**.")
                     .multilineTextAlignment(.center)
+                    .font(AppTheme.bodyFont(12))
                     .foregroundColor(.secondary)
                     .padding(.horizontal, 10)
 
                 Button("Register Background Service") {
                     registerDaemon()
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(PrimaryGlowButtonStyle())
             }
 
             Button("Refresh Status") {
                 installer.refreshStatus()
             }
-            .buttonStyle(.bordered)
+            .buttonStyle(SecondaryButtonStyle())
             .controlSize(.small)
         }
     }
@@ -125,14 +128,14 @@ struct DaemonSetupView: View {
         VStack(spacing: 16) {
             Image(systemName: "lock.doc.fill")
                 .font(.system(size: 48))
-                .foregroundStyle(.purple.gradient)
+                .foregroundStyle(AppTheme.electricBlue.gradient)
 
             Text("Grant Full Disk Access")
-                .font(.title2)
-                .fontWeight(.bold)
+                .font(AppTheme.titleFont(22))
 
             Text("FocusDragon needs Full Disk Access to modify /etc/hosts and block websites.\n\nIn the settings window, find **FocusDragon** (or **Xcode** if running in debug) and toggle it on.")
                 .multilineTextAlignment(.center)
+                .font(AppTheme.bodyFont(12))
                 .foregroundColor(.secondary)
                 .padding(.horizontal, 10)
 
@@ -147,7 +150,7 @@ struct DaemonSetupView: View {
             Button("Open Full Disk Access Settings") {
                 installer.openFullDiskAccessSettings()
             }
-            .buttonStyle(.borderedProminent)
+            .buttonStyle(PrimaryGlowButtonStyle())
         }
     }
 
@@ -155,14 +158,14 @@ struct DaemonSetupView: View {
         VStack(spacing: 16) {
             Image(systemName: "checkmark.seal.fill")
                 .font(.system(size: 56))
-                .foregroundStyle(.green.gradient)
+                .foregroundStyle(AppTheme.accent.gradient)
 
             Text("All Set!")
-                .font(.title2)
-                .fontWeight(.bold)
+                .font(AppTheme.titleFont(22))
 
             Text("FocusDragon is ready to protect your focus. Blocks will stay active even when the app is closed.")
                 .multilineTextAlignment(.center)
+                .font(AppTheme.bodyFont(12))
                 .foregroundColor(.secondary)
                 .padding(.horizontal, 20)
 
@@ -182,12 +185,12 @@ struct DaemonSetupView: View {
         HStack(spacing: 12) {
             Image(systemName: icon)
                 .font(.title3)
-                .foregroundColor(.blue)
+                .foregroundColor(AppTheme.accent)
                 .frame(width: 28)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(title).font(.headline)
-                Text(description).font(.caption).foregroundColor(.secondary)
+                Text(title).font(AppTheme.headerFont(14))
+                Text(description).font(AppTheme.bodyFont(11)).foregroundColor(.secondary)
             }
         }
     }
@@ -198,7 +201,7 @@ struct DaemonSetupView: View {
                 .fill(active ? Color.green : Color.orange)
                 .frame(width: 8, height: 8)
             Text(title)
-                .font(.caption)
+                .font(AppTheme.bodyFont(11))
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
@@ -219,17 +222,17 @@ struct DaemonSetupView: View {
         HStack {
             if currentStep > 0 {
                 Button("Back") { currentStep -= 1 }
-                    .buttonStyle(.bordered)
+                    .buttonStyle(SecondaryButtonStyle())
             }
 
             Spacer()
 
             if currentStep < 3 {
                 Button("Next") { currentStep += 1 }
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(PrimaryGlowButtonStyle())
             } else {
                 Button("Done") { dismiss() }
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(PrimaryGlowButtonStyle())
             }
         }
     }
